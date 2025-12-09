@@ -150,22 +150,142 @@ pytest tests/test_basic_imports.py
 
 ## 🐳 Docker Deployment
 
+### Prerequisites
+
+Before building the Docker image, ensure you have:
+
+1. **Docker installed**: [Install Docker](https://docs.docker.com/get-docker/)
+2. **Trained model**: The transformer model must be trained and saved at `models/transformer/distilbert/`
+3. **Sufficient disk space**: ~2-3 GB for the Docker image
+
 ### Build Docker Image
 
 ```bash
-docker build -t cloud-nlp-classification-gcp .
+# Build the image (this may take 5-10 minutes)
+docker build -t cloud-nlp-classifier .
+
+# Optional: Build with a specific tag
+docker build -t cloud-nlp-classifier:v1.0 .
+
+# Optional: Build with no cache (for clean rebuild)
+docker build --no-cache -t cloud-nlp-classifier .
 ```
+
+**Build Details:**
+- Base image: `python:3.11-slim`
+- Image size: ~2 GB (includes PyTorch, transformers, and model weights)
+- Build time: 5-10 minutes (depending on network speed)
 
 ### Run Docker Container
 
 ```bash
-docker run -p 8000:8000 cloud-nlp-classification-gcp
+# Run in foreground (see logs in terminal)
+docker run -p 8000:8000 cloud-nlp-classifier
+
+# Run in background (detached mode)
+docker run -d -p 8000:8000 --name nlp-api cloud-nlp-classifier
+
+# Run with custom port mapping
+docker run -p 9000:8000 cloud-nlp-classifier
+
+# Run with environment variables (if needed)
+docker run -p 8000:8000 -e LOG_LEVEL=debug cloud-nlp-classifier
 ```
 
-Test the containerized API:
+### Test the Containerized API
 
 ```bash
+# Health check
 curl http://localhost:8000/health
+
+# Make a prediction
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"text": "This is a test message"}'
+
+# Access interactive API documentation
+# Open in browser: http://localhost:8000/docs
+```
+
+### Docker Management Commands
+
+```bash
+# View running containers
+docker ps
+
+# View all containers (including stopped)
+docker ps -a
+
+# View container logs
+docker logs nlp-api
+
+# Follow logs in real-time
+docker logs -f nlp-api
+
+# Stop the container
+docker stop nlp-api
+
+# Start a stopped container
+docker start nlp-api
+
+# Remove the container
+docker rm nlp-api
+
+# Remove the image
+docker rmi cloud-nlp-classifier
+
+# View image details
+docker inspect cloud-nlp-classifier
+
+# Check image size
+docker images cloud-nlp-classifier
+```
+
+### Docker Health Check
+
+The container includes a built-in health check that runs every 30 seconds:
+
+```bash
+# Check container health status
+docker inspect --format='{{.State.Health.Status}}' nlp-api
+```
+
+Health states:
+- `starting`: Container is starting up (first 40 seconds)
+- `healthy`: API is responding correctly
+- `unhealthy`: API failed to respond to health checks
+
+### Troubleshooting
+
+**Container won't start:**
+```bash
+# Check logs for errors
+docker logs nlp-api
+
+# Run interactively to see startup issues
+docker run -it -p 8000:8000 cloud-nlp-classifier
+```
+
+**Port already in use:**
+```bash
+# Use a different port
+docker run -p 8001:8000 cloud-nlp-classifier
+```
+
+**Out of memory:**
+```bash
+# Increase Docker memory limit in Docker Desktop settings
+# Or run with memory limit
+docker run -p 8000:8000 --memory="2g" cloud-nlp-classifier
+```
+
+**Model not found error:**
+```bash
+# Ensure the model is trained before building the image
+python run_transformer.py
+
+# Verify model files exist
+ls -la models/transformer/distilbert/
 ```
 
 ## ☁️ GCP Deployment
