@@ -52,8 +52,14 @@ Dockerfile.streamlit
 ├── Size: ~2.5 GB (with models)
 ├── Port: 8501
 ├── User: appuser (non-root)
+├── PYTHONPATH: /app (for module imports)
 └── Health Check: /_stcore/health
 ```
+
+**Key Configuration:**
+- `PYTHONPATH=/app` ensures `src` module is importable
+- Non-root user (UID 1000) for security
+- Optimized layer caching for fast rebuilds
 
 ### Services
 
@@ -351,7 +357,30 @@ docker port nlp-ui
 docker run -d -p 8502:8501 --name nlp-ui-alt cloud-nlp-classifier-ui:latest
 ```
 
-### Issue 3: Models Not Loading
+### Issue 3: Module Import Errors
+
+**Symptoms:**
+```
+ModuleNotFoundError: No module named 'src'
+```
+
+**Solutions:**
+```bash
+# 1. Verify PYTHONPATH is set
+docker exec nlp-ui env | grep PYTHONPATH
+# Expected: PYTHONPATH=/app
+
+# 2. Check Dockerfile has PYTHONPATH
+grep PYTHONPATH Dockerfile.streamlit
+# Expected: ENV PYTHONPATH=/app
+
+# 3. Rebuild with latest Dockerfile
+docker build -f Dockerfile.streamlit \
+  --no-cache \
+  -t cloud-nlp-classifier-ui:latest .
+```
+
+### Issue 4: Models Not Loading
 
 **Symptoms:**
 ```
