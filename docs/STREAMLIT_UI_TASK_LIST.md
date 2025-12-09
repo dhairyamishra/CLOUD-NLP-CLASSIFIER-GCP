@@ -355,20 +355,27 @@ This task list outlines the implementation of a **minimal Streamlit web interfac
     - [x] Error handling
 
 ### 8.2 Docker Integration
-- [ ] **Add Streamlit to Docker** (Optional)
-  - [ ] Create `Dockerfile.streamlit`
-  - [ ] Add Streamlit service to `docker-compose.yml`
-  - [ ] Expose port 8501
-  - [ ] Test Docker deployment
-  - [ ] Update Docker documentation
+- [x] **Add Streamlit to Docker**
+  - [x] Create `Dockerfile.streamlit` (58 lines)
+  - [x] Add Streamlit service to `docker-compose.yml`
+  - [x] Create `docker-compose.ui.yml` for development
+  - [x] Expose port 8501
+  - [ ] Test Docker deployment (pending manual test)
+  - [x] Update Docker documentation
+    - [x] Created `docs/DOCKER_STREAMLIT_GUIDE.md` (650+ lines)
+    - [x] Updated `docs/DOCKER_GUIDE.md`
+    - [x] Created `docs/DOCKER_CLOUD_DEPLOYMENT_SUMMARY.md`
 
 ### 8.3 Cloud Deployment
-- [ ] **Deploy to cloud** (Optional)
-  - [ ] Deploy to Streamlit Cloud (free tier)
-  - [ ] Or deploy to GCP Cloud Run
-  - [ ] Configure secrets management
-  - [ ] Set up custom domain (optional)
-  - [ ] Document deployment process
+- [x] **Cloud deployment guides created**
+  - [x] Created `docs/GCP_CLOUDRUN_STREAMLIT_GUIDE.md` (450+ lines)
+  - [x] Deployment instructions for GCP Cloud Run
+  - [x] Cost optimization strategies documented
+  - [x] Security configuration guide
+  - [x] Monitoring and alerts setup
+  - [ ] Actual deployment (pending - requires GCP project)
+  - [ ] Custom domain setup (optional)
+  - [ ] Streamlit Cloud deployment (alternative option)
 
 ---
 
