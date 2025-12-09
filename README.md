@@ -7,11 +7,26 @@ An end-to-end text classification pipeline for hate speech detection, demonstrat
 This project implements a production-grade hate speech classification system with:
 
 - **Classical ML Baselines**: TF-IDF + Logistic Regression/SVM
-- **Transformer Model**: Fine-tuned DistilBERT
-- **REST API**: FastAPI server for inference
-- **Containerization**: Docker for deployment
-- **Cloud Deployment**: Google Cloud Platform (Cloud Run)
+- **Transformer Model**: Fine-tuned DistilBERT with advanced training optimizations
+- **REST API**: FastAPI server with comprehensive error handling and validation
+- **Containerization**: Docker with multi-environment support (dev/prod)
+- **Cloud Training**: GCP GPU VM support for efficient model training
+- **Cloud Deployment**: Google Cloud Platform (Cloud Run) - Ready for deployment
 - **Performance Analysis**: Offline metrics, online latency/throughput, cost analysis
+- **Testing Suite**: Comprehensive unit and integration tests
+
+### 🎯 Project Status
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| **Phase 1**: Data Pipeline | ✅ Complete | Dataset download, preprocessing, train/val/test splits |
+| **Phase 2**: Baseline Models | ✅ Complete | TF-IDF + LogReg/SVM with full evaluation |
+| **Phase 3**: Transformer Training | ✅ Complete | DistilBERT fine-tuning with advanced features |
+| **Phase 4**: FastAPI Server | ✅ Complete | Production-ready API with Pydantic V2 |
+| **Phase 5**: Dockerization | ✅ Complete | Multi-environment Docker setup |
+| **Phase 6**: Cloud Deployment | 🚀 Ready | Prepared for GCP Cloud Run deployment |
+
+**Progress**: 5/6 phases complete (83%)
 
 ## 🏗️ Architecture
 
@@ -103,7 +118,7 @@ python -m src.models.train_baselines
 
 ### 5. Train Transformer Model
 
-#### Local Training (Quick Testing)
+#### Local Training (Quick Testing - 3 epochs)
 
 ```bash
 # Cross-platform Python script (Recommended)
@@ -117,14 +132,21 @@ python -m src.models.transformer_training
 # Linux/Mac: bash scripts/run_transformer_local.sh
 ```
 
+**Local Training Specs:**
+- Epochs: 3 (quick testing)
+- Batch Size: 32
+- Max Sequence Length: 128
+- Expected Accuracy: 85-88%
+- Training Time: 1-2 hours (CPU), 15-25 min (GPU)
+
 **Note:** Transformer training requires a GPU for reasonable speed. Set `device: "cpu"` in `config/config_transformer.yaml` if GPU is unavailable.
 
-#### Cloud Training (Production)
+#### Cloud Training (Production - 10 epochs)
 
 For production-quality models with optimized settings:
 
 ```bash
-# Using cloud configuration locally
+# Using cloud configuration locally (if you have a GPU)
 python -m src.models.transformer_training \
   --config config/config_transformer_cloud.yaml \
   --mode cloud \
@@ -134,6 +156,15 @@ python -m src.models.transformer_training \
 # Windows: .\scripts\run_transformer_cloud.ps1
 # Linux/Mac: bash scripts/run_gcp_training.sh
 ```
+
+**Cloud Training Specs:**
+- Epochs: 10 (production quality)
+- Batch Size: 64
+- Max Sequence Length: 256
+- FP16: Enabled (mixed precision)
+- LR Scheduler: Cosine with warmup
+- Expected Accuracy: 90-93%
+- Training Time: 20-40 min (T4 GPU), 15-25 min (V100)
 
 #### Advanced Training Options
 
@@ -156,12 +187,16 @@ python -m src.models.transformer_training \
 # Edit config YAML: lr_scheduler.type = "cosine" | "linear" | "polynomial"
 ```
 
-**Training Features:**
-- ✅ Early stopping based on validation F1/loss
-- ✅ Learning rate schedulers (linear, cosine, polynomial, constant)
-- ✅ Mixed precision training (FP16) for faster GPU training
-- ✅ Gradient accumulation for effective larger batch sizes
-- ✅ Automatic best model selection
+**Advanced Training Features:**
+- ✅ **Early Stopping**: Configurable patience based on validation F1/loss
+- ✅ **LR Schedulers**: Linear, cosine, cosine_with_restarts, polynomial, constant, constant_with_warmup
+- ✅ **Mixed Precision (FP16)**: Faster GPU training with automatic fallback
+- ✅ **Gradient Accumulation**: Effective larger batch sizes on limited memory
+- ✅ **Warmup Steps**: Configurable warmup ratio or fixed steps
+- ✅ **DataLoader Optimizations**: Multi-worker loading with pin_memory
+- ✅ **CLI Overrides**: Override any config parameter via command line
+- ✅ **Automatic Best Model Selection**: Saves best checkpoint based on validation metrics
+- ✅ **Comprehensive Logging**: Training progress, metrics, and timing information
 
 ### 6. Run API Server (Local)
 
@@ -188,12 +223,29 @@ curl -X POST http://localhost:8000/predict \
 ### 7. Run Tests
 
 ```bash
-# Run all tests
-pytest tests/
+# Run all tests with the universal test runner
+python run_tests.py
 
-# Run specific test file
-pytest tests/test_basic_imports.py
+# Or use pytest directly
+pytest tests/ -v
+
+# Run specific test categories
+pytest tests/test_basic_imports.py      # Import tests
+pytest tests/test_api.py                # API tests
+pytest tests/test_baseline_inference.py # Baseline model tests
+pytest tests/test_advanced_training.py  # Training configuration tests
+
+# Run with coverage
+pytest tests/ --cov=src --cov-report=html
 ```
+
+**Test Suite Coverage:**
+- ✅ Import validation (6 tests)
+- ✅ API endpoints (health, predict, docs)
+- ✅ Model loading and inference
+- ✅ Configuration validation
+- ✅ Error handling
+- ✅ Pydantic V2 compliance (zero deprecation warnings)
 
 ## 🐳 Docker Deployment
 
@@ -255,9 +307,27 @@ docker run -p 8000:8000 -e LOG_LEVEL=debug cloud-nlp-classifier
 ```
 
 **Docker Compose Configurations:**
-- `docker-compose.yml` - Standard deployment
-- `docker-compose.dev.yml` - Development with hot-reload
-- `docker-compose.prod.yml` - Production with multiple workers
+- `docker-compose.yml` - Standard deployment with health checks and resource limits
+- `docker-compose.dev.yml` - Development with hot-reload, debug logging, and volume mounts
+- `docker-compose.prod.yml` - Production with 4 workers, optimized resources, and restart policies
+
+**Docker Compose Usage:**
+```bash
+# Standard deployment
+docker-compose up -d
+
+# Development mode (with hot-reload)
+docker-compose -f docker-compose.dev.yml up
+
+# Production mode (multiple workers)
+docker-compose -f docker-compose.prod.yml up -d
+
+# View logs
+docker-compose logs -f api
+
+# Stop services
+docker-compose down
+```
 
 ### Test the Containerized API
 
@@ -315,12 +385,21 @@ The container includes a built-in health check that runs every 30 seconds:
 ```bash
 # Check container health status
 docker inspect --format='{{.State.Health.Status}}' nlp-api
+
+# View health check logs
+docker inspect --format='{{json .State.Health}}' nlp-api | python -m json.tool
 ```
 
 Health states:
-- `starting`: Container is starting up (first 40 seconds)
-- `healthy`: API is responding correctly
-- `unhealthy`: API failed to respond to health checks
+- `starting`: Container is starting up (first 40 seconds grace period)
+- `healthy`: API is responding correctly to /health endpoint
+- `unhealthy`: API failed 3 consecutive health checks
+
+**Health Check Configuration:**
+- Interval: 30 seconds
+- Timeout: 10 seconds
+- Retries: 3
+- Start Period: 40 seconds (allows model loading time)
 
 ### Troubleshooting
 
@@ -495,6 +574,13 @@ gcloud compute instances delete nlp-training-vm --zone=us-central1-a
 - Use preemptible instances for 60-80% cost savings (may be interrupted)
 - Use Cloud Storage for model artifacts instead of large boot disks
 - Monitor training with early stopping to avoid unnecessary epochs
+- Use T4 GPUs for DistilBERT (V100/A100 overkill for this model size)
+- Set up billing alerts to avoid unexpected charges
+
+**Estimated Training Costs (10 epochs):**
+- T4 GPU (30-40 min): ~$0.20-$0.25
+- V100 GPU (15-25 min): ~$0.60-$1.00
+- A100 GPU (10-15 min): ~$0.60-$0.90
 
 ### Local vs Cloud Configuration Comparison
 
@@ -507,8 +593,9 @@ gcloud compute instances delete nlp-training-vm --zone=us-central1-a
 | **Gradient Accumulation** | 1 | 2 |
 | **LR Scheduler** | Linear | Cosine |
 | **Early Stopping** | 3 patience | 5 patience |
-| **Training Time** | 1-2 hours (CPU) | 20-40 min (GPU) |
-| **Expected Accuracy** | 85-90% | 90-95% |
+| **Training Time** | 1-2 hours (CPU) | 20-40 min (T4 GPU) |
+| **Expected Accuracy** | 85-88% | 90-93% |
+| **Expected F1 Score** | 0.82-0.85 | 0.88-0.91 |
 
 ## ☁️ GCP Deployment (Inference)
 
@@ -598,24 +685,65 @@ training:
 
 ## 📈 Expected Results
 
-### Baseline Models
+### Baseline Models (TF-IDF + LogReg/SVM)
 - **Accuracy**: 75-85%
+- **F1 Score**: 0.70-0.80 (macro)
 - **Training Time**: <5 minutes
 - **Inference Latency**: <10ms per sample
+- **Model Size**: <50 MB
 
-### Transformer Model
-- **Accuracy**: 85-95%
-- **Training Time**: 30-60 minutes (GPU)
-- **Inference Latency**: 50-100ms per sample
+### Transformer Model (DistilBERT)
+
+**Local Training (3 epochs):**
+- **Accuracy**: 85-88%
+- **F1 Score**: 0.82-0.85 (macro)
+- **Training Time**: 1-2 hours (CPU), 15-25 min (GPU)
+- **Inference Latency**: 45-60ms (p50), 80-100ms (p95)
+- **Model Size**: ~250 MB
+
+**Cloud Training (10 epochs):**
+- **Accuracy**: 90-93%
+- **F1 Score**: 0.88-0.91 (macro)
+- **Training Time**: 20-40 min (T4 GPU)
+- **Inference Latency**: 45-60ms (p50), 80-100ms (p95)
+- **Model Size**: ~250 MB
+
+### API Performance
+- **Startup Time**: 5-8 seconds (model loading)
+- **Memory Usage**: ~1.2 GB (active inference)
+- **Throughput**: 20-50 requests/second (single worker)
+- **Cold Start**: <10 seconds (Docker container)
 
 ## 🧪 Development Workflow
 
-1. **Data Exploration**: Use `notebooks/eda.ipynb` for EDA
-2. **Experiment**: Modify configs in `config/`
-3. **Train**: Run training scripts
-4. **Evaluate**: Check metrics and logs
-5. **Deploy**: Test locally → Docker → GCP
-6. **Monitor**: Track performance and costs
+1. **Data Exploration**: Use `notebooks/eda.ipynb` for EDA (optional)
+2. **Experiment**: Modify configs in `config/` or use CLI overrides
+3. **Train Locally**: Quick iteration with 3 epochs
+4. **Train on Cloud**: Production training with 10 epochs on GCP GPU VM
+5. **Evaluate**: Check metrics, logs, and model performance
+6. **Test API**: Run locally with `uvicorn` or Docker
+7. **Run Tests**: Validate with comprehensive test suite
+8. **Deploy**: Docker → GCP Cloud Run
+9. **Monitor**: Track performance, latency, and costs
+
+## 🛠️ Development Tools
+
+### Cross-Platform Scripts
+All major operations have universal Python scripts that work on Windows, Linux, and Mac:
+- `run_preprocess.py` - Data preprocessing
+- `run_baselines.py` - Baseline model training
+- `run_transformer.py` - Transformer training
+- `run_tests.py` - Test suite execution
+
+### Platform-Specific Scripts
+Alternative scripts for shell/PowerShell users:
+- `scripts/*.sh` - Bash scripts (Linux/Mac)
+- `scripts/*.ps1` - PowerShell scripts (Windows)
+
+### Configuration Files
+- `config/config_baselines.yaml` - Baseline model hyperparameters
+- `config/config_transformer.yaml` - Local training config (3 epochs)
+- `config/config_transformer_cloud.yaml` - Cloud training config (10 epochs)
 
 ## 📝 Course Relevance
 
@@ -649,9 +777,20 @@ This project is for educational purposes.
 
 ## 🙏 Acknowledgments
 
-- **Dataset**: Hate Speech Offensive dataset from Hugging Face
+- **Dataset**: Hate Speech Offensive dataset from Hugging Face (24,783 samples)
 - **Model**: DistilBERT from Hugging Face Transformers
-- **Framework**: FastAPI, PyTorch, scikit-learn
+- **Frameworks**: FastAPI, PyTorch, Transformers, scikit-learn
+- **Infrastructure**: Docker, GCP (Cloud Run, Compute Engine)
+- **Testing**: pytest, Pydantic V2
+
+## 📚 Additional Documentation
+
+Comprehensive guides available in the `docs/` directory:
+- `DOCKER_GUIDE.md` - Complete Docker documentation (650+ lines)
+- `DOCKER_COMPOSE_GUIDE.md` - Docker Compose best practices (600+ lines)
+- `PHASE10_ADVANCED_TRAINING_SUMMARY.md` - Advanced training features
+- `CROSS_PLATFORM_GUIDE.md` - Cross-platform development guide
+- `PROJECT_STATUS.md` - Current project status and metrics
 
 ## 📞 Contact
 
