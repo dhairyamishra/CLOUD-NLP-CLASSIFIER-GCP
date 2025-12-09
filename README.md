@@ -178,6 +178,21 @@ docker build --no-cache -t cloud-nlp-classifier .
 
 ### Run Docker Container
 
+**Option 1: Using Docker Compose (Recommended)**
+
+```bash
+# Start services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+**Option 2: Using Docker CLI**
+
 ```bash
 # Run in foreground (see logs in terminal)
 docker run -p 8000:8000 cloud-nlp-classifier
@@ -191,6 +206,11 @@ docker run -p 9000:8000 cloud-nlp-classifier
 # Run with environment variables (if needed)
 docker run -p 8000:8000 -e LOG_LEVEL=debug cloud-nlp-classifier
 ```
+
+**Docker Compose Configurations:**
+- `docker-compose.yml` - Standard deployment
+- `docker-compose.dev.yml` - Development with hot-reload
+- `docker-compose.prod.yml` - Production with multiple workers
 
 ### Test the Containerized API
 

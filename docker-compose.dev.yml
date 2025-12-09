@@ -1,0 +1,38 @@
+# ============================================================================
+# Docker Compose - Development Configuration
+# ============================================================================
+# This configuration is optimized for local development with hot-reload
+# and debugging capabilities.
+#
+# Usage:
+#   docker-compose -f docker-compose.dev.yml up
+# ============================================================================
+
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cloud-nlp-classifier:dev
+    container_name: nlp-api-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=debug
+      - WORKERS=1
+      - RELOAD=true
+    volumes:
+      # Mount source code for hot-reload
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./logs:/app/logs
+    command: uvicorn src.api.server:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    restart: unless-stopped
+    networks:
+      - nlp-network-dev
+
+networks:
+  nlp-network-dev:
+    driver: bridge
