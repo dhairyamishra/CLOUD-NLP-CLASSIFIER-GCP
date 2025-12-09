@@ -1,0 +1,35 @@
+# Configuration for Multi-Head Toxicity Model
+
+# Model settings
+model:
+  name: "distilbert-base-uncased"
+  max_seq_length: 256
+  labels:
+    - "toxic"
+    - "severe_toxic"
+    - "obscene"
+    - "threat"
+    - "insult"
+    - "identity_hate"
+
+# Training hyperparameters
+training:
+  train_batch_size: 16
+  eval_batch_size: 16
+  learning_rate: 2.0e-5
+  num_train_epochs: 3
+  plot_step_interval: 500  # Plot loss every N steps
+  threshold: 0.5
+
+# Data paths
+data:
+  train_path: "data/train.csv"
+  test_path: "data/test.csv"
+  test_labels_path: "data/test_labels.csv"
+
+# Model save paths
+model_save_dir: "models/toxicity_multi_head"
+output_plot_path: "training_loss_plot.png"
+
+# Device settings
+device: "cuda"  # Options: "cuda", "cpu"
