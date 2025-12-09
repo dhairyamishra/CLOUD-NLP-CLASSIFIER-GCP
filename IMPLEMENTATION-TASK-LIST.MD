@@ -18,7 +18,7 @@ This is a comprehensive task list for implementing an end-to-end text classifica
         - [x] `src/data/preprocess.py`
         - [x] `src/data/dataset_utils.py`
         - [x] `src/models/baselines.py`
-        - [ ] `src/models/transformer_training.py` ⏳ (Next)
+        - [x] `src/models/transformer_training.py`
         - [x] `src/models/evaluation.py`
         - [ ] `src/api/server.py` ⏳
     - [x] Create config files:
@@ -27,7 +27,7 @@ This is a comprehensive task list for implementing an end-to-end text classifica
     - [x] Create scripts:
         - [x] `scripts/run_preprocess_local.sh`
         - [x] `scripts/run_baselines_local.sh`
-        - [ ] `scripts/run_transformer_local.sh` ⏳
+        - [x] `scripts/run_transformer_local.sh`
         - [ ] `scripts/run_api_local.sh` ⏳
     - [x] Create test file: `tests/test_basic_imports.py`.
 - [x] **0.2. Python Environment & Dependencies**
@@ -139,21 +139,21 @@ This is a comprehensive task list for implementing an end-to-end text classifica
 
 ### 3. Transformer Model (Local Fine-Tuning)
 
-- [ ] **3.1. Transformer Training Script** (`src/models/transformer_training.py`)
-    - [ ] Load processed `train.csv`, `val.csv`, `test.csv`.
-    - [ ] Map string labels to integer IDs (label encoder).
-    - [ ] Tokenize text with DistilBERT tokenizer (`"distilbert-base-uncased"`), with configurable `max_seq_length`.
-    - [ ] Set random seeds (`random`, `numpy`, `torch`) for reproducibility.
-    - [ ] Fine-tune **"distilbert-base-uncased"** (using Trainer API or custom loop).
-    - [ ] Evaluate on the test set:
-        - [ ] Accuracy
-        - [ ] Macro F1
-        - [ ] Weighted F1
-    - [ ] Measure and log:
-        - [ ] Total training time.
-        - [ ] Average inference time per sample on a small test batch.
-    - [ ] Save model/tokenizer to `models/transformer/distilbert/` using Hugging Face save utilities.
-    - [ ] Save label mappings (`label2id` and `id2label`) to `models/transformer/distilbert/labels.json`.
+- [x] **3.1. Transformer Training Script** (`src/models/transformer_training.py`)
+    - [x] Load processed `train.csv`, `val.csv`, `test.csv`.
+    - [x] Map string labels to integer IDs (label encoder).
+    - [x] Tokenize text with DistilBERT tokenizer (`"distilbert-base-uncased"`), with configurable `max_seq_length`.
+    - [x] Set random seeds (`random`, `numpy`, `torch`) for reproducibility.
+    - [x] Fine-tune **"distilbert-base-uncased"** (using Trainer API or custom loop).
+    - [x] Evaluate on the test set:
+        - [x] Accuracy
+        - [x] Macro F1
+        - [x] Weighted F1
+    - [x] Measure and log:
+        - [x] Total training time.
+        - [x] Average inference time per sample on a small test batch.
+    - [x] Save model/tokenizer to `models/transformer/distilbert/` using Hugging Face save utilities.
+    - [x] Save label mappings (`label2id` and `id2label`) to `models/transformer/distilbert/labels.json`.
 - [x] **3.2. Simple Config** (`config/config_transformer.yaml`)
     - [x] Define hyperparameters, for example:
         - [x] `model_name`
@@ -164,14 +164,15 @@ This is a comprehensive task list for implementing an end-to-end text classifica
         - [x] `num_train_epochs`
         - [x] `weight_decay`
         - [x] `seed`
-    - [ ] Load and use this config in `transformer_training.py`. ⏳
-- [ ] **3.3. Shell Script for Local Training**
-    - [ ] Implement `scripts/run_transformer_local.sh`:
+    - [x] Load and use this config in `transformer_training.py`.
+- [x] **3.3. Shell Script for Local Training**
+    - [x] Implement `scripts/run_transformer_local.sh`:
       ```bash
       #!/usr/bin/env bash
       set -e
       python -m src.models.transformer_training
       ```
+    - [x] Implement `scripts/run_transformer_local.ps1` for Windows.
 
 ---
 
@@ -322,7 +323,7 @@ This is a comprehensive task list for implementing an end-to-end text classifica
         - [x] ROC-AUC (for binary or one-vs-rest scenarios where applicable).
     - [x] Ensure both:
         - [x] Baseline script.
-        - [ ] Transformer script. ⏳
+        - [x] Transformer script.
       print and/or log:
         - [x] Accuracy
         - [x] Macro F1

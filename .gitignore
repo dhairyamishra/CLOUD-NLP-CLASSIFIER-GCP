@@ -1,8 +1,11 @@
+# ============================================
 # Python
+# ============================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.pyc
 .Python
 build/
 develop-eggs/
@@ -16,69 +19,185 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
+# ============================================
 # Virtual Environment
+# ============================================
 venv/
 env/
 ENV/
-.venv
+.venv/
+env.bak/
+venv.bak/
 
-# IDE
+# ============================================
+# IDE & Editors
+# ============================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
+*.sublime-project
+*.sublime-workspace
 
+# ============================================
 # Jupyter Notebook
-.ipynb_checkpoints
+# ============================================
+.ipynb_checkpoints/
 *.ipynb_checkpoints/
+profile_default/
+ipython_config.py
 
-# Environment variables
+# ============================================
+# Environment Variables
+# ============================================
 .env
 .env.local
+.env.*.local
 
-# Data files (large datasets)
+# ============================================
+# Data Files (Large Datasets)
+# ============================================
 data/raw/*.csv
 data/raw/*.tsv
 data/raw/*.json
+data/raw/*.parquet
 data/processed/*.csv
 data/processed/*.tsv
+data/processed/*.parquet
 
-# Model files (large binaries)
+# Keep README files
+!data/raw/README.md
+!data/processed/README.md
+
+# ============================================
+# Model Files (Large Binaries)
+# ============================================
+# Baseline models
 models/baselines/*.joblib
 models/baselines/*.pkl
-models/transformer/*/pytorch_model.bin
-models/transformer/*/model.safetensors
-models/transformer/*/*.bin
+models/baselines/*.pickle
 
-# Logs
+# Transformer models - PyTorch binaries
+models/transformer/**/*.bin
+models/transformer/**/pytorch_model.bin
+models/transformer/**/model.safetensors
+models/transformer/**/*.safetensors
+
+# Transformer models - Keep config and metadata
+!models/transformer/**/config.json
+!models/transformer/**/labels.json
+!models/transformer/**/training_info.json
+!models/transformer/**/tokenizer_config.json
+!models/transformer/**/special_tokens_map.json
+
+# Transformer checkpoints (can be very large)
+models/transformer/**/checkpoint-*/
+models/transformer/**/runs/
+
+# ============================================
+# Logs & Monitoring
+# ============================================
 *.log
 logs/
 wandb/
+tensorboard/
+mlruns/
+.neptune/
 
-# Testing
+# ============================================
+# Testing & Coverage
+# ============================================
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
 
+# ============================================
 # Docker
+# ============================================
 *.tar
 *.tar.gz
+docker-compose.override.yml
 
-# GCP
+# ============================================
+# GCP & Cloud
+# ============================================
 .gcp/
 *.json
 !config/*.json
-!models/transformer/*/config.json
-!models/transformer/*/labels.json
+!config/**/*.json
+!models/transformer/**/config.json
+!models/transformer/**/labels.json
+!models/transformer/**/training_info.json
+!models/transformer/**/tokenizer_config.json
+!models/transformer/**/special_tokens_map.json
+credentials.json
+service-account*.json
 
-# Temporary files
+# ============================================
+# Temporary & Cache Files
+# ============================================
 *.tmp
 *.bak
 *.swp
+*.swo
 .cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# ============================================
+# OS Specific
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# Project Specific
+# ============================================
+# Training outputs
+training_log.txt
+training_output.txt
+
+# Downloaded datasets (if using download script)
+*.zip
+*.gz
+*.tar.gz
+
+# Hugging Face cache
+.cache/huggingface/
+transformers_cache/
+
+# Local experiments
+experiments/
+scratch/
+temp/

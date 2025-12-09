@@ -74,11 +74,15 @@ This will download and prepare the hate speech dataset at `data/raw/dataset.csv`
 ### 3. Preprocess Data
 
 ```bash
-# Run preprocessing pipeline
+# Cross-platform Python script (Recommended)
+python run_preprocess.py
+
+# Or run directly:
 python -m src.data.preprocess
 
-# Or use the shell script:
-bash scripts/run_preprocess_local.sh
+# Or use platform-specific scripts:
+# Windows: .\scripts\run_preprocess_local.ps1
+# Linux/Mac: bash scripts/run_preprocess_local.sh
 ```
 
 This creates train/val/test splits in `data/processed/`.
@@ -86,17 +90,24 @@ This creates train/val/test splits in `data/processed/`.
 ### 4. Train Baseline Models
 
 ```bash
-# Train TF-IDF + Logistic Regression/SVM
+# Cross-platform Python script (Recommended)
+python run_baselines.py
+
+# Or run directly:
 python -m src.models.train_baselines
 
-# Or use the shell script:
-bash scripts/run_baselines_local.sh
+# Or use platform-specific scripts:
+# Windows: .\scripts\run_baselines_local.ps1
+# Linux/Mac: bash scripts/run_baselines_local.sh
 ```
 
 ### 5. Train Transformer Model
 
 ```bash
-# Fine-tune DistilBERT
+# Cross-platform Python script (Recommended)
+python run_transformer.py
+
+# Or run directly:
 python -m src.models.transformer_training
 
 # Or use the shell script:

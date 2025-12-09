@@ -4,16 +4,16 @@
 model:
   name: "distilbert-base-uncased"
   num_labels: null  # Will be set automatically based on dataset
-  max_seq_length: 128  # Maximum sequence length for tokenization
+  max_seq_length: 32  # SUPER REDUCED for ultra-fast testing
 
 # Training hyperparameters
 training:
-  train_batch_size: 16
-  eval_batch_size: 32
-  learning_rate: 2.0e-5
-  num_train_epochs: 3
+  train_batch_size: 64  # MAXIMIZED for fastest training
+  eval_batch_size: 128  # MAXIMIZED for fastest evaluation
+  learning_rate: 5.0e-5  # Higher for faster convergence
+  num_train_epochs: 1   # MINIMAL - just 1 epoch
   weight_decay: 0.01
-  warmup_ratio: 0.1  # Warmup steps as proportion of total steps
+  warmup_ratio: 0.0     # NO WARMUP for fastest start
   gradient_accumulation_steps: 1
   max_grad_norm: 1.0
   
@@ -23,20 +23,20 @@ training:
   
   # Early stopping
   early_stopping:
-    enabled: true
+    enabled: false  # DISABLED for quick testing
     patience: 3
     metric: "eval_f1_macro"  # Metric to monitor
     mode: "max"  # "max" for metrics to maximize, "min" for loss
   
   # Learning rate scheduler
   lr_scheduler:
-    type: "linear"  # Options: "linear", "cosine", "constant"
+    type: "constant"  # NO SCHEDULING for speed
   
   # Logging
-  logging_steps: 50
-  eval_steps: 100
-  save_steps: 100
-  save_total_limit: 3  # Keep only best 3 checkpoints
+  logging_steps: 10      # Very frequent updates
+  eval_steps: 500        # EVAL ONLY ONCE at end
+  save_steps: 500        # SAVE ONLY ONCE at end
+  save_total_limit: 1    # Only 1 checkpoint
 
 # Data paths
 data:
