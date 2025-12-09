@@ -9,9 +9,9 @@ Write-Host ""
 Write-Host "Checking Docker..." -ForegroundColor Yellow
 try {
     $dockerVersion = docker --version
-    Write-Host "✓ Docker is installed: $dockerVersion" -ForegroundColor Green
+    Write-Host "Docker is installed: $dockerVersion" -ForegroundColor Green
 } catch {
-    Write-Host "✗ Docker is not running!" -ForegroundColor Red
+    Write-Host "Docker is not running!" -ForegroundColor Red
     Write-Host "Please start Docker Desktop and try again." -ForegroundColor Yellow
     exit 1
 }
@@ -24,25 +24,25 @@ Write-Host "This may take 5-10 minutes on first build..." -ForegroundColor Gray
 docker build -f Dockerfile.streamlit -t cloud-nlp-classifier-ui:test .
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "✗ Docker build failed!" -ForegroundColor Red
+    Write-Host "Docker build failed!" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✓ Docker image built successfully" -ForegroundColor Green
+Write-Host "Docker image built successfully" -ForegroundColor Green
 Write-Host ""
 
 # Check if port 8501 is available
 Write-Host "Checking if port 8501 is available..." -ForegroundColor Yellow
 $portCheck = netstat -ano | Select-String ":8501"
 if ($portCheck) {
-    Write-Host "⚠ Port 8501 is already in use!" -ForegroundColor Yellow
+    Write-Host "Port 8501 is already in use!" -ForegroundColor Yellow
     Write-Host "Stopping any existing containers..." -ForegroundColor Yellow
     docker stop nlp-ui-test 2>$null
     docker rm nlp-ui-test 2>$null
     Start-Sleep -Seconds 2
 }
 
-Write-Host "✓ Port 8501 is available" -ForegroundColor Green
+Write-Host "Port 8501 is available" -ForegroundColor Green
 Write-Host ""
 
 # Run the container
@@ -53,11 +53,11 @@ docker run -d `
     cloud-nlp-classifier-ui:test
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "✗ Failed to start container!" -ForegroundColor Red
+    Write-Host "Failed to start container!" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✓ Container started successfully" -ForegroundColor Green
+Write-Host "Container started successfully" -ForegroundColor Green
 Write-Host ""
 
 # Wait for container to be ready
@@ -76,12 +76,12 @@ Start-Sleep -Seconds 5
 try {
     $response = Invoke-WebRequest -Uri "http://localhost:8501/_stcore/health" -UseBasicParsing -TimeoutSec 30
     if ($response.StatusCode -eq 200) {
-        Write-Host "✓ Health check passed!" -ForegroundColor Green
+        Write-Host "Health check passed!" -ForegroundColor Green
     } else {
-        Write-Host "⚠ Health check returned status: $($response.StatusCode)" -ForegroundColor Yellow
+        Write-Host "Health check returned status: $($response.StatusCode)" -ForegroundColor Yellow
     }
 } catch {
-    Write-Host "⚠ Health check failed (this is normal if container is still starting)" -ForegroundColor Yellow
+    Write-Host "Health check failed (this is normal if container is still starting)" -ForegroundColor Yellow
     Write-Host "Error: $_" -ForegroundColor Gray
 }
 
