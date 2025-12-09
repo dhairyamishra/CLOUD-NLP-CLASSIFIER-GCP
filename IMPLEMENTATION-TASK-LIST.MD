@@ -14,10 +14,11 @@ This is a comprehensive task list for implementing an end-to-end text classifica
 | **Phase 5**: Dockerization | ✅ Complete | 100% |
 | **Phase 6**: Cloud Deployment | 🚀 Ready | 95% |
 | **Phase 10**: Advanced Training | ✅ Complete | 100% |
+| **Phase 13**: Streamlit UI | 📋 Planned | 0% |
 
 **Latest Achievement**: Phase 10 (Advanced Training) completed! Cloud training support with CLI overrides 🚀  
 **Current Status**: All core phases complete, ready for GCP Cloud Run deployment  
-**Next Up**: Phase 6 - Deploy to GCP Cloud Run (infrastructure ready)
+**Next Up**: Phase 13 - Streamlit UI Implementation (task list created) OR Phase 6 - Deploy to GCP Cloud Run
 
 ---
 
@@ -509,3 +510,126 @@ This is a comprehensive task list for implementing an end-to-end text classifica
         - [ ] Report (Course Relevance section).
         - [ ] Slides (Team/Contributions slide).
     - **Note**: Currently solo project, all phases completed by primary developer
+
+---
+
+### 13. Streamlit UI Implementation (Interactive Web Interface)
+
+> **Goal**: Create a user-friendly Streamlit web interface for interactive sentiment analysis with model selection and chat-style interaction.
+
+**📋 Detailed Task List**: See `docs/STREAMLIT_UI_TASK_LIST.md` for comprehensive breakdown
+
+- [ ] **13.1. Project Setup & Dependencies**
+    - [ ] Add Streamlit to requirements.txt (`streamlit>=1.28.0`)
+    - [ ] Create `src/ui/` directory structure
+    - [ ] Create `.streamlit/config.toml` for theme configuration
+    - [ ] Set up project structure for UI components
+
+- [ ] **13.2. Model Loading & Management**
+    - [ ] Create `ModelManager` class (`src/ui/utils/model_manager.py`)
+        - [ ] Load baseline models (LogReg, SVM)
+        - [ ] Load transformer model (DistilBERT)
+        - [ ] Implement caching with `@st.cache_resource`
+        - [ ] Handle GPU/CPU device detection
+    - [ ] Create `InferenceHandler` class (`src/ui/utils/inference_handler.py`)
+        - [ ] Implement baseline prediction method
+        - [ ] Implement transformer prediction method
+        - [ ] Add inference time measurement
+        - [ ] Add input validation
+
+- [ ] **13.3. UI Components**
+    - [ ] Create sidebar component (`src/ui/components/sidebar.py`)
+        - [ ] Model selection dropdown
+        - [ ] Model information display
+        - [ ] Settings section
+        - [ ] Clear history button
+    - [ ] Create chat interface (`src/ui/components/chat_interface.py`)
+        - [ ] Text input area
+        - [ ] Chat history display
+        - [ ] User/bot message bubbles
+        - [ ] Example prompts
+    - [ ] Create results display (`src/ui/components/results_display.py`)
+        - [ ] Sentiment badge with color coding
+        - [ ] Confidence scores
+        - [ ] Probability bar charts
+        - [ ] Inference time display
+    - [ ] Create header component (`src/ui/components/header.py`)
+        - [ ] Main title and description
+        - [ ] Status indicators
+
+- [ ] **13.4. Main Application Logic**
+    - [ ] Create main app file (`src/ui/streamlit_app.py`)
+        - [ ] Set up page configuration
+        - [ ] Initialize session state
+        - [ ] Implement main layout
+        - [ ] Handle user interactions
+    - [ ] Create state manager (`src/ui/utils/state_manager.py`)
+        - [ ] Initialize session state
+        - [ ] Manage chat history
+        - [ ] Handle model selection
+    - [ ] Create utility functions (`src/ui/utils/helpers.py`)
+        - [ ] Text formatting helpers
+        - [ ] Color/emoji helpers
+        - [ ] Validation functions
+
+- [ ] **13.5. Testing & Validation**
+    - [ ] Create UI test suite (`tests/test_streamlit_ui.py`)
+        - [ ] Test model loading
+        - [ ] Test inference functionality
+        - [ ] Test error handling
+    - [ ] Manual testing checklist
+        - [ ] Test all models
+        - [ ] Test edge cases
+        - [ ] Test UI responsiveness
+
+- [ ] **13.6. Documentation**
+    - [ ] Create UI guide (`docs/STREAMLIT_UI_GUIDE.md`)
+        - [ ] Installation instructions
+        - [ ] Feature overview
+        - [ ] Troubleshooting guide
+    - [ ] Update main README.md
+        - [ ] Add Streamlit section
+        - [ ] Add screenshots
+        - [ ] Update architecture diagram
+    - [ ] Create user guide (`docs/UI_USER_GUIDE.md`)
+
+- [ ] **13.7. Deployment Scripts**
+    - [ ] Create `scripts/run_streamlit_local.sh` (Linux/Mac)
+    - [ ] Create `scripts/run_streamlit_local.ps1` (Windows)
+    - [ ] Create `run_streamlit.py` (cross-platform)
+    - [ ] Update Docker configuration (optional)
+        - [ ] Create `Dockerfile.streamlit`
+        - [ ] Add to docker-compose.yml
+
+- [ ] **13.8. Optional Enhancements**
+    - [ ] Analytics dashboard
+        - [ ] Prediction statistics
+        - [ ] Visualizations
+    - [ ] Batch processing
+        - [ ] File upload
+        - [ ] Batch predictions
+        - [ ] Results export
+    - [ ] Model comparison view
+        - [ ] Side-by-side comparison
+        - [ ] Performance metrics
+    - [ ] Export functionality
+        - [ ] Export chat history
+        - [ ] Generate reports
+
+**Expected Deliverables**:
+- ✅ Functional Streamlit web interface
+- ✅ Model selection sidebar (3 models)
+- ✅ Chat-style interaction
+- ✅ Real-time sentiment analysis
+- ✅ Confidence scores and visualizations
+- ✅ Comprehensive documentation
+- ✅ Cross-platform run scripts
+
+**Estimated Time**: 6-10 hours (core features), 12-20 hours (with optional enhancements)
+
+**Success Criteria**:
+- UI loads in < 5 seconds
+- Inference completes in < 2 seconds
+- All models work correctly
+- Intuitive and responsive design
+- No crashes during normal use

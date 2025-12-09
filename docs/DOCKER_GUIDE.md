@@ -16,14 +16,27 @@ This guide provides comprehensive instructions for containerizing and deploying 
 
 ## Overview
 
-The Dockerfile creates a production-ready container with:
+This project provides two Docker containers:
 
+### 1. FastAPI Server (`Dockerfile`)
 - **Base Image**: `python:3.11-slim` (lightweight, secure)
 - **Web Server**: FastAPI + Uvicorn
+- **Port**: 8000
 - **Model**: Pre-trained DistilBERT transformer
 - **Security**: Non-root user, minimal attack surface
 - **Health Checks**: Automatic health monitoring
 - **Size**: ~2 GB (optimized with multi-stage caching)
+
+### 2. Streamlit UI (`Dockerfile.streamlit`)
+- **Base Image**: `python:3.11-slim`
+- **Web Framework**: Streamlit
+- **Port**: 8501
+- **Features**: Interactive chat interface, model selection
+- **Security**: Non-root user, headless mode
+- **Health Checks**: Streamlit health endpoint
+- **Size**: ~2.5 GB (includes models)
+
+**📚 For Streamlit UI Docker guide, see**: [`DOCKER_STREAMLIT_GUIDE.md`](./DOCKER_STREAMLIT_GUIDE.md)
 
 ## Prerequisites
 

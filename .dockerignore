@@ -52,12 +52,15 @@ data/processed/
 *.json
 !models/transformer/distilbert/*.json
 
-# Scripts (not needed in container)
+# Scripts (not needed in container, except for Docker-specific ones)
 scripts/
+!scripts/check_models.py
+!scripts/docker_entrypoint.sh
 
-# Model checkpoints (only keep final model)
+# Model checkpoints (only keep final models)
 models/transformer/distilbert/checkpoint-*/
-models/baselines/
+# Keep baseline models (*.joblib files)
+# models/baselines/ is now included
 
 # Logs and temporary files
 *.log
