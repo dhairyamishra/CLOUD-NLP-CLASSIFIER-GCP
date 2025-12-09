@@ -2,10 +2,14 @@
 # Dockerfile for Cloud NLP Classifier - FastAPI Inference Server
 # ============================================================================
 # This Dockerfile creates a production-ready container for the text 
-# classification API using DistilBERT transformer model.
+# classification API with multiple models:
+# - DistilBERT transformer model (best accuracy)
+# - Logistic Regression with TF-IDF (fast, interpretable)
+# - Linear SVM with TF-IDF (fast, robust)
 #
 # Build: docker build -t cloud-nlp-classifier .
 # Run:   docker run -p 8000:8000 cloud-nlp-classifier
+# Run with specific model: docker run -p 8000:8000 -e DEFAULT_MODEL=logistic_regression cloud-nlp-classifier
 # ============================================================================
 
 # Use Python 3.11 slim image for smaller size
@@ -19,7 +23,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEFAULT_MODEL=distilbert
 
 # Install system dependencies required by PyTorch and transformers
 # - build-essential: C compiler for some Python packages
@@ -45,9 +50,12 @@ COPY src/ ./src/
 # Copy configuration files
 COPY config/ ./config/
 
-# Copy the trained model and tokenizer
-# This includes: model.safetensors, config.json, tokenizer files, labels.json
+# Copy all trained models
+# Transformer model: DistilBERT (model.safetensors, config.json, tokenizer files, labels.json)
 COPY models/transformer/distilbert/ ./models/transformer/distilbert/
+
+# Baseline models: Logistic Regression and Linear SVM (sklearn pipelines)
+COPY models/baselines/*.joblib ./models/baselines/
 
 # Create a non-root user for security
 RUN useradd -m -u 1000 appuser && \

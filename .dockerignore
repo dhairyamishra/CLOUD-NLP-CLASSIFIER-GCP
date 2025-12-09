@@ -55,9 +55,10 @@ data/processed/
 # Scripts (not needed in container)
 scripts/
 
-# Model checkpoints (only keep final model)
+# Model checkpoints (only keep final models)
 models/transformer/distilbert/checkpoint-*/
-models/baselines/
+# Keep baseline models (*.joblib files)
+# models/baselines/ is now included
 
 # Logs and temporary files
 *.log

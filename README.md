@@ -249,12 +249,30 @@ pytest tests/ --cov=src --cov-report=html
 
 ## 🐳 Docker Deployment
 
+### Multi-Model Support 🎯
+
+The Docker image now includes **3 models** with dynamic switching:
+
+| Model | Type | Speed | Accuracy | Use Case |
+|-------|------|-------|----------|----------|
+| **distilbert** | Transformer | ~50ms | 90-93% | Best accuracy |
+| **logistic_regression** | Baseline | ~5ms | 85-88% | Fast inference |
+| **linear_svm** | Baseline | ~5ms | 85-88% | Robust predictions |
+
+**Key Features:**
+- ✅ All models included in single Docker image
+- ✅ Switch models via API without restarting container
+- ✅ Choose default model via environment variable
+- ✅ Production-ready with health checks and monitoring
+
 ### Prerequisites
 
 Before building the Docker image, ensure you have:
 
 1. **Docker installed**: [Install Docker](https://docs.docker.com/get-docker/)
-2. **Trained model**: The transformer model must be trained and saved at `models/transformer/distilbert/`
+2. **Trained models**: 
+   - Transformer: `models/transformer/distilbert/`
+   - Baselines: `models/baselines/*.joblib`
 3. **Sufficient disk space**: ~2-3 GB for the Docker image
 
 ### Build Docker Image
@@ -293,17 +311,25 @@ docker-compose down
 **Option 2: Using Docker CLI**
 
 ```bash
-# Run in foreground (see logs in terminal)
-docker run -p 8000:8000 cloud-nlp-classifier
-
-# Run in background (detached mode)
+# Run with default model (DistilBERT - best accuracy)
 docker run -d -p 8000:8000 --name nlp-api cloud-nlp-classifier
 
-# Run with custom port mapping
-docker run -p 9000:8000 cloud-nlp-classifier
+# Run with fast model (Logistic Regression - 10x faster)
+docker run -d -p 8000:8000 -e DEFAULT_MODEL=logistic_regression --name nlp-api cloud-nlp-classifier
 
-# Run with environment variables (if needed)
-docker run -p 8000:8000 -e LOG_LEVEL=debug cloud-nlp-classifier
+# Run with Linear SVM model
+docker run -d -p 8000:8000 -e DEFAULT_MODEL=linear_svm --name nlp-api cloud-nlp-classifier
+
+# Run with custom port mapping
+docker run -d -p 9000:8000 --name nlp-api cloud-nlp-classifier
+
+# Run with debug logging
+docker run -d -p 8000:8000 -e LOG_LEVEL=debug --name nlp-api cloud-nlp-classifier
+```
+
+**Environment Variables:**
+- `DEFAULT_MODEL`: Choose startup model (`distilbert`, `logistic_regression`, `linear_svm`)
+- `LOG_LEVEL`: Logging level (`INFO`, `DEBUG`, `WARNING`, `ERROR`)
 ```
 
 **Docker Compose Configurations:**
@@ -332,10 +358,23 @@ docker-compose down
 ### Test the Containerized API
 
 ```bash
-# Health check
+# Health check (shows current model and available models)
 curl http://localhost:8000/health
 
-# Make a prediction
+# List all available models
+curl http://localhost:8000/models
+
+# Make a prediction with current model
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"text": "This is a test message"}'
+
+# Switch to a different model (without restarting container!)
+curl -X POST http://localhost:8000/models/switch \
+  -H "Content-Type: application/json" \
+  -d '{"model_name": "logistic_regression"}'
+
+# Make prediction with new model
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
   -d '{"text": "This is a test message"}'
@@ -786,6 +825,7 @@ This project is for educational purposes.
 ## 📚 Additional Documentation
 
 Comprehensive guides available in the `docs/` directory:
+- `MULTI_MODEL_DOCKER_GUIDE.md` - **NEW!** Multi-model Docker deployment (500+ lines)
 - `DOCKER_GUIDE.md` - Complete Docker documentation (650+ lines)
 - `DOCKER_COMPOSE_GUIDE.md` - Docker Compose best practices (600+ lines)
 - `PHASE10_ADVANCED_TRAINING_SUMMARY.md` - Advanced training features

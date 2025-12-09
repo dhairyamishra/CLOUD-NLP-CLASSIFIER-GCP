@@ -1,0 +1,46 @@
+# ============================================================================
+# API Only Docker Compose - Backend Only
+# ============================================================================
+# Run just the FastAPI backend without UI
+#
+# Usage:
+#   docker-compose -f docker-compose.api-only.yml up -d
+#   docker-compose -f docker-compose.api-only.yml down
+# ============================================================================
+
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cloud-nlp-classifier:latest
+    container_name: nlp-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DEFAULT_MODEL=distilbert
+      - LOG_LEVEL=info
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - nlp-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2.5G
+        reservations:
+          cpus: '1.0'
+          memory: 1.5G
+
+networks:
+  nlp-network:
+    driver: bridge
+    name: nlp-network
