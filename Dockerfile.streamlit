@@ -37,10 +37,16 @@ RUN useradd -m -u 1000 -s /bin/bash appuser && \
 COPY --chown=appuser:appuser src/ ./src/
 COPY --chown=appuser:appuser .streamlit/ ./.streamlit/
 COPY --chown=appuser:appuser config/ ./config/
+COPY --chown=appuser:appuser scripts/check_models.py ./scripts/
+COPY --chown=appuser:appuser scripts/docker_entrypoint.sh ./scripts/
 
 # Copy trained models (if available)
-# Note: Models should be mounted as volume in production
+# Note: Models should be mounted as volume in production or trained before building
+# The COPY command will fail gracefully if models don't exist (handled by build context)
 COPY --chown=appuser:appuser models/ ./models/
+
+# Make entrypoint script executable
+RUN chmod +x ./scripts/docker_entrypoint.sh
 
 # Switch to non-root user
 USER appuser
@@ -52,9 +58,5 @@ EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8501/_stcore/health || exit 1
 
-# Run Streamlit app
-CMD ["streamlit", "run", "src/ui/streamlit_app.py", \
-     "--server.port=8501", \
-     "--server.address=0.0.0.0", \
-     "--server.headless=true", \
-     "--browser.gatherUsageStats=false"]
+# Run Streamlit app with model check
+CMD ["./scripts/docker_entrypoint.sh"]

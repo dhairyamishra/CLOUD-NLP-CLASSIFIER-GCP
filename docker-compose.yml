@@ -69,9 +69,9 @@ services:
       - STREAMLIT_SERVER_ADDRESS=0.0.0.0
       - STREAMLIT_SERVER_HEADLESS=true
       - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
-    # volumes:
+    volumes:
       # Optional: Mount models directory (shared with API)
-      # - ./models:/app/models
+      - ./models:/app/models
       # Optional: Mount for development (hot reload)
       # - ./src/ui:/app/src/ui
     restart: unless-stopped

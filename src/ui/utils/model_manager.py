@@ -56,22 +56,25 @@ class ModelManager:
         else:
             return "cpu"
     
-    @st.cache_resource
-    def load_baseline_models(_self) -> Dict[str, Any]:
+    def load_baseline_models(self) -> Dict[str, Any]:
         """
         Load baseline models (Logistic Regression and Linear SVM).
         
         Returns:
             Dictionary with model names as keys and model objects as values.
         """
+        # Check if already cached in session state
+        if 'baseline_models' in st.session_state:
+            return st.session_state['baseline_models']
+        
         models = {}
         
         try:
             # Load Logistic Regression
-            logreg_path = _self.baseline_dir / "logistic_regression_tfidf.joblib"
+            logreg_path = self.baseline_dir / "logistic_regression_tfidf.joblib"
             if logreg_path.exists():
                 models['logreg'] = joblib.load(logreg_path)
-                logger.info("✅ Loaded Logistic Regression model")
+                logger.info(f"✅ Loaded Logistic Regression model from {logreg_path}")
             else:
                 logger.warning(f"⚠️ Logistic Regression model not found at {logreg_path}")
         except Exception as e:
@@ -79,44 +82,57 @@ class ModelManager:
         
         try:
             # Load Linear SVM
-            svm_path = _self.baseline_dir / "linear_svm_tfidf.joblib"
+            svm_path = self.baseline_dir / "linear_svm_tfidf.joblib"
             if svm_path.exists():
                 models['svm'] = joblib.load(svm_path)
-                logger.info("✅ Loaded Linear SVM model")
+                logger.info(f"✅ Loaded Linear SVM model from {svm_path}")
             else:
                 logger.warning(f"⚠️ Linear SVM model not found at {svm_path}")
         except Exception as e:
             logger.error(f"❌ Error loading Linear SVM: {e}")
         
+        # Cache in session state
+        st.session_state['baseline_models'] = models
         return models
     
-    @st.cache_resource
-    def load_transformer_model(_self) -> Optional[Dict[str, Any]]:
+    def load_transformer_model(self) -> Optional[Dict[str, Any]]:
         """
         Load transformer model (DistilBERT).
         
         Returns:
             Dictionary with model, tokenizer, and label mappings, or None if failed.
         """
+        # Check if already cached in session state
+        if 'transformer_model' in st.session_state:
+            return st.session_state['transformer_model']
+        
         try:
-            if not _self.transformer_dir.exists():
-                logger.warning(f"⚠️ Transformer directory not found at {_self.transformer_dir}")
+            if not self.transformer_dir.exists():
+                logger.warning(f"⚠️ Transformer directory not found at {self.transformer_dir}")
+                return None
+            
+            # Check for required model files
+            model_file = self.transformer_dir / "pytorch_model.bin"
+            config_file = self.transformer_dir / "config.json"
+            
+            if not model_file.exists() and not config_file.exists():
+                logger.warning(f"⚠️ Transformer model files not found in {self.transformer_dir}")
                 return None
             
             # Load model
             model = AutoModelForSequenceClassification.from_pretrained(
-                str(_self.transformer_dir)
+                str(self.transformer_dir)
             )
-            model.to(_self.device)
+            model.to(self.device)
             model.eval()
             
             # Load tokenizer
             tokenizer = AutoTokenizer.from_pretrained(
-                str(_self.transformer_dir)
+                str(self.transformer_dir)
             )
             
             # Load label mappings
-            labels_path = _self.transformer_dir / "labels.json"
+            labels_path = self.transformer_dir / "labels.json"
             if labels_path.exists():
                 with open(labels_path, 'r') as f:
                     label_data = json.load(f)
@@ -125,17 +141,21 @@ class ModelManager:
                     id2label = {int(k): v for k, v in id2label.items()}
             else:
                 # Fallback to model config
-                config = AutoConfig.from_pretrained(str(_self.transformer_dir))
+                config = AutoConfig.from_pretrained(str(self.transformer_dir))
                 id2label = config.id2label
             
-            logger.info("✅ Loaded DistilBERT transformer model")
+            logger.info(f"✅ Loaded DistilBERT transformer model from {self.transformer_dir}")
             
-            return {
+            result = {
                 'model': model,
                 'tokenizer': tokenizer,
                 'id2label': id2label,
-                'device': _self.device
+                'device': self.device
             }
+            
+            # Cache in session state
+            st.session_state['transformer_model'] = result
+            return result
         
         except Exception as e:
             logger.error(f"❌ Error loading transformer model: {e}")
