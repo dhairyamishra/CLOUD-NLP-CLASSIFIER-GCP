@@ -42,5 +42,24 @@ def test_import_config():
     assert config is not None
 
 
+def test_import_baseline_classifier():
+    """Test that baseline classifier can be imported."""
+    from src.models.baselines import BaselineTextClassifier
+    assert BaselineTextClassifier is not None
+
+
+def test_import_evaluation_metrics():
+    """Test that evaluation metrics can be imported."""
+    from src.models.evaluation import compute_classification_metrics
+    assert compute_classification_metrics is not None
+
+
+def test_import_fastapi_app():
+    """Test that FastAPI app can be imported."""
+    from src.api.server import app
+    assert app is not None
+    assert hasattr(app, 'routes')
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
