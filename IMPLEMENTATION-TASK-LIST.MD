@@ -6,65 +6,65 @@ This is a comprehensive task list for implementing an end-to-end text classifica
 
 ### 0. Repository Initialization & Structure
 
-- [ ] **0.1. Basic Repo Structure**
-    - [ ] Create core files: `README.md`, `PROJECT_TASKS.md`, `requirements.txt`, `.gitignore`.
-    - [ ] Create top-level directories: `src/`, `data/`, `models/`, `api/`, `config/`, `notebooks/`, `scripts/`, `tests/`.
-    - [ ] Create data subdirectories:
-        - [ ] `data/raw/`
-        - [ ] `data/processed/`
-        - [ ] `data/README.md` describing expected schema and file locations.
-    - [ ] Add `__init__.py` files to `src/data/`, `src/models/`, `src/api/`, `config/`, and `tests/`.
-    - [ ] Create utility files:
-        - [ ] `src/data/preprocess.py`
-        - [ ] `src/data/dataset_utils.py`
-        - [ ] `src/models/baselines.py`
-        - [ ] `src/models/transformer_training.py`
-        - [ ] `src/models/evaluation.py`
-        - [ ] `src/api/server.py`
-    - [ ] Create config files:
-        - [ ] `config/config_baselines.yaml`
-        - [ ] `config/config_transformer.yaml`
-    - [ ] Create scripts:
-        - [ ] `scripts/run_preprocess_local.sh`
-        - [ ] `scripts/run_baselines_local.sh`
-        - [ ] `scripts/run_transformer_local.sh`
-        - [ ] `scripts/run_api_local.sh`
-    - [ ] Create test file: `tests/test_basic_imports.py`.
-- [ ] **0.2. Python Environment & Dependencies**
-    - [ ] Create `requirements.txt` with dependencies:
-        - [ ] `pandas`, `numpy`, `scikit-learn`
-        - [ ] `matplotlib`, `seaborn`
-        - [ ] `torch`, `transformers`, `datasets`
-        - [ ] `fastapi`, `uvicorn`
-        - [ ] `python-dotenv`, `pyyaml`
-        - [ ] `pytest`
-        - [ ] (optional) `jupyter`
-    - [ ] Ensure `src` modules use proper package/relative imports.
-- [ ] **0.3. Logging & Reproducibility**
-    - [ ] Add a small logging utility or basic `logging` setup (can be in each main script).
-    - [ ] In training scripts, prefer `logging` over bare `print` for key events.
-    - [ ] Set random seeds in training scripts (`random`, `numpy`, `torch`) for reproducibility.
-- [ ] **0.4. README Content**
-    - [ ] Add a short project description.
-    - [ ] Add “Quickstart” instructions:
-        - [ ] How to install dependencies.
-        - [ ] How to run preprocessing.
-        - [ ] How to train baselines.
-        - [ ] How to train transformer.
-        - [ ] How to run API.
-        - [ ] How to run tests.
-    - [ ] Add a brief overview of repo structure.
+- [x] **0.1. Basic Repo Structure**
+    - [x] Create core files: `README.md`, `PROJECT_TASKS.md`, `requirements.txt`, `.gitignore`.
+    - [x] Create top-level directories: `src/`, `data/`, `models/`, `api/`, `config/`, `notebooks/`, `scripts/`, `tests/`.
+    - [x] Create data subdirectories:
+        - [x] `data/raw/`
+        - [x] `data/processed/`
+        - [x] `data/README.md` describing expected schema and file locations.
+    - [x] Add `__init__.py` files to `src/data/`, `src/models/`, `src/api/`, `config/`, and `tests/`.
+    - [x] Create utility files:
+        - [x] `src/data/preprocess.py`
+        - [x] `src/data/dataset_utils.py`
+        - [x] `src/models/baselines.py`
+        - [ ] `src/models/transformer_training.py` ⏳ (Next)
+        - [x] `src/models/evaluation.py`
+        - [ ] `src/api/server.py` ⏳
+    - [x] Create config files:
+        - [x] `config/config_baselines.yaml`
+        - [x] `config/config_transformer.yaml`
+    - [x] Create scripts:
+        - [x] `scripts/run_preprocess_local.sh`
+        - [x] `scripts/run_baselines_local.sh`
+        - [ ] `scripts/run_transformer_local.sh` ⏳
+        - [ ] `scripts/run_api_local.sh` ⏳
+    - [x] Create test file: `tests/test_basic_imports.py`.
+- [x] **0.2. Python Environment & Dependencies**
+    - [x] Create `requirements.txt` with dependencies:
+        - [x] `pandas`, `numpy`, `scikit-learn`
+        - [x] `matplotlib`, `seaborn`
+        - [x] `torch`, `transformers`, `datasets`
+        - [x] `fastapi`, `uvicorn`
+        - [x] `python-dotenv`, `pyyaml`
+        - [x] `pytest`
+        - [x] (optional) `jupyter`
+    - [x] Ensure `src` modules use proper package/relative imports.
+- [x] **0.3. Logging & Reproducibility**
+    - [x] Add a small logging utility or basic `logging` setup (can be in each main script).
+    - [x] In training scripts, prefer `logging` over bare `print` for key events.
+    - [x] Set random seeds in training scripts (`random`, `numpy`, `torch`) for reproducibility.
+- [x] **0.4. README Content**
+    - [x] Add a short project description.
+    - [x] Add "Quickstart" instructions:
+        - [x] How to install dependencies.
+        - [x] How to run preprocessing.
+        - [x] How to train baselines.
+        - [x] How to train transformer.
+        - [x] How to run API.
+        - [x] How to run tests.
+    - [x] Add a brief overview of repo structure.
 
 ---
 
 ### 1. Dataset Handling (Local Only First)
 
-- [ ] **1.1. Dataset Assumptions**
-    - [ ] Assume local CSV at `data/raw/dataset.csv` with `text` and `label` columns.
-    - [ ] Document expected schema in `data/README.md`.
-- [ ] **1.2. Implement Data Utilities** (`src/data/dataset_utils.py`)
-    - [ ] Implement `def load_raw_dataset(csv_path: str) -> pd.DataFrame:` to load the CSV with basic checks.
-    - [ ] Implement:
+- [x] **1.1. Dataset Assumptions**
+    - [x] Assume local CSV at `data/raw/dataset.csv` with `text` and `label` columns.
+    - [x] Document expected schema in `data/README.md`.
+- [x] **1.2. Implement Data Utilities** (`src/data/dataset_utils.py`)
+    - [x] Implement `def load_raw_dataset(csv_path: str) -> pd.DataFrame:` to load the CSV with basic checks.
+    - [x] Implement:
       ```python
       def train_val_test_split(
           df: pd.DataFrame,
@@ -74,20 +74,20 @@ This is a comprehensive task list for implementing an end-to-end text classifica
           stratify: bool = True
       ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
       ```
-    - [ ] Add validation for `text` and `label` column existence and raise informative errors.
-- [ ] **1.3. Preprocessing Script** (`src/data/preprocess.py`)
-    - [ ] Implement `def clean_text(text: str) -> str:` (lowercase, remove URLs, strip spaces).
-    - [ ] Implement `def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:` (clean text, drop missing).
-    - [ ] Implement CLI entry point to:
-        - [ ] Load `data/raw/dataset.csv`.
-        - [ ] Preprocess data.
-        - [ ] Split into train/val/test.
-        - [ ] Save splits to:
-            - [ ] `data/processed/train.csv`
-            - [ ] `data/processed/val.csv`
-            - [ ] `data/processed/test.csv`
-- [ ] **1.4. Preprocessing Run Script** (`scripts/run_preprocess_local.sh`)
-    - [ ] Implement script to run the preprocessing module, e.g.:
+    - [x] Add validation for `text` and `label` column existence and raise informative errors.
+- [x] **1.3. Preprocessing Script** (`src/data/preprocess.py`)
+    - [x] Implement `def clean_text(text: str) -> str:` (lowercase, remove URLs, strip spaces).
+    - [x] Implement `def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:` (clean text, drop missing).
+    - [x] Implement CLI entry point to:
+        - [x] Load `data/raw/dataset.csv`.
+        - [x] Preprocess data.
+        - [x] Split into train/val/test.
+        - [x] Save splits to:
+            - [x] `data/processed/train.csv`
+            - [x] `data/processed/val.csv`
+            - [x] `data/processed/test.csv`
+- [x] **1.4. Preprocessing Run Script** (`scripts/run_preprocess_local.sh`)
+    - [x] Implement script to run the preprocessing module, e.g.:
       ```bash
       #!/usr/bin/env bash
       set -e
@@ -103,37 +103,37 @@ This is a comprehensive task list for implementing an end-to-end text classifica
 
 ### 2. Baseline Models (Local)
 
-- [ ] **2.1. Baseline Model Implementation** (`src/models/baselines.py`)
-    - [ ] Create `class BaselineTextClassifier` supporting:
-        - [ ] `CountVectorizer` or `TfidfVectorizer`
-        - [ ] `LogisticRegression` or `LinearSVC`
-    - [ ] Implement methods:
-        - [ ] `fit(texts, labels)`
-        - [ ] `predict(texts)`
-        - [ ] `predict_proba(texts)` (return `None` if not supported).
-    - [ ] Use `class_weight="balanced"` where appropriate.
-- [ ] **2.2. Baseline Training Script** (`src/models/train_baselines.py` or equivalent)
-    - [ ] Load processed `train.csv`, `val.csv`, `test.csv`.
-    - [ ] Train models:
-        - [ ] Logistic Regression + TF-IDF.
-        - [ ] Linear SVM + TF-IDF.
-    - [ ] Evaluate models:
-        - [ ] Accuracy
-        - [ ] Macro F1
-        - [ ] Weighted F1
-    - [ ] Log basic performance metrics and optionally classification report/confusion matrix.
-    - [ ] Measure and log:
-        - [ ] Training time for each model.
-        - [ ] Average inference time per sample on a small batch (e.g., 100 samples).
-    - [ ] Save models/vectorizers to `models/baselines/*.joblib`.
-    - [ ] Create shell script: `scripts/run_baselines_local.sh`.
-- [ ] **2.3. Baseline Config** (`config/config_baselines.yaml`)
-    - [ ] Define configuration keys such as:
-        - [ ] `max_features`
-        - [ ] `ngram_range`
-        - [ ] `use_tfidf`
-        - [ ] `C` or regularization parameters for each classifier.
-    - [ ] Load and use this config inside `train_baselines.py` instead of hard-coding hyperparameters.
+- [x] **2.1. Baseline Model Implementation** (`src/models/baselines.py`)
+    - [x] Create `class BaselineTextClassifier` supporting:
+        - [x] `CountVectorizer` or `TfidfVectorizer`
+        - [x] `LogisticRegression` or `LinearSVC`
+    - [x] Implement methods:
+        - [x] `fit(texts, labels)`
+        - [x] `predict(texts)`
+        - [x] `predict_proba(texts)` (return `None` if not supported).
+    - [x] Use `class_weight="balanced"` where appropriate.
+- [x] **2.2. Baseline Training Script** (`src/models/train_baselines.py` or equivalent)
+    - [x] Load processed `train.csv`, `val.csv`, `test.csv`.
+    - [x] Train models:
+        - [x] Logistic Regression + TF-IDF.
+        - [x] Linear SVM + TF-IDF.
+    - [x] Evaluate models:
+        - [x] Accuracy
+        - [x] Macro F1
+        - [x] Weighted F1
+    - [x] Log basic performance metrics and optionally classification report/confusion matrix.
+    - [x] Measure and log:
+        - [x] Training time for each model.
+        - [x] Average inference time per sample on a small batch (e.g., 100 samples).
+    - [x] Save models/vectorizers to `models/baselines/*.joblib`.
+    - [x] Create shell script: `scripts/run_baselines_local.sh`.
+- [x] **2.3. Baseline Config** (`config/config_baselines.yaml`)
+    - [x] Define configuration keys such as:
+        - [x] `max_features`
+        - [x] `ngram_range`
+        - [x] `use_tfidf`
+        - [x] `C` or regularization parameters for each classifier.
+    - [x] Load and use this config inside `train_baselines.py` instead of hard-coding hyperparameters.
 
 ---
 
@@ -154,17 +154,17 @@ This is a comprehensive task list for implementing an end-to-end text classifica
         - [ ] Average inference time per sample on a small test batch.
     - [ ] Save model/tokenizer to `models/transformer/distilbert/` using Hugging Face save utilities.
     - [ ] Save label mappings (`label2id` and `id2label`) to `models/transformer/distilbert/labels.json`.
-- [ ] **3.2. Simple Config** (`config/config_transformer.yaml`)
-    - [ ] Define hyperparameters, for example:
-        - [ ] `model_name`
-        - [ ] `max_seq_length`
-        - [ ] `train_batch_size`
-        - [ ] `eval_batch_size`
-        - [ ] `learning_rate`
-        - [ ] `num_train_epochs`
-        - [ ] `weight_decay`
-        - [ ] `seed`
-    - [ ] Load and use this config in `transformer_training.py`.
+- [x] **3.2. Simple Config** (`config/config_transformer.yaml`)
+    - [x] Define hyperparameters, for example:
+        - [x] `model_name`
+        - [x] `max_seq_length`
+        - [x] `train_batch_size`
+        - [x] `eval_batch_size`
+        - [x] `learning_rate`
+        - [x] `num_train_epochs`
+        - [x] `weight_decay`
+        - [x] `seed`
+    - [ ] Load and use this config in `transformer_training.py`. ⏳
 - [ ] **3.3. Shell Script for Local Training**
     - [ ] Implement `scripts/run_transformer_local.sh`:
       ```bash
@@ -177,15 +177,15 @@ This is a comprehensive task list for implementing an end-to-end text classifica
 
 ### 4. Evaluation Utilities (Shared)
 
-- [ ] **4.1. Metric Implementation** (`src/models/evaluation.py`)
-    - [ ] Implement `def compute_classification_metrics(y_true, y_pred) -> Dict[str, float]:` that returns:
-        - [ ] `accuracy`
-        - [ ] `f1_macro`
-        - [ ] `f1_weighted`
-    - [ ] Optionally implement confusion matrix helper (text/ASCII or simple wrapper around sklearn).
-    - [ ] Integrate these utilities into:
-        - [ ] Baseline training script.
-        - [ ] Transformer training script.
+- [x] **4.1. Metric Implementation** (`src/models/evaluation.py`)
+    - [x] Implement `def compute_classification_metrics(y_true, y_pred) -> Dict[str, float]:` that returns:
+        - [x] `accuracy`
+        - [x] `f1_macro`
+        - [x] `f1_weighted`
+    - [x] Optionally implement confusion matrix helper (text/ASCII or simple wrapper around sklearn).
+    - [x] Integrate these utilities into:
+        - [x] Baseline training script.
+        - [ ] Transformer training script. ⏳
 
 ---
 
@@ -219,12 +219,12 @@ This is a comprehensive task list for implementing an end-to-end text classifica
 
 ### 6. Basic Tests
 
-- [ ] **6.1. Import Test** (`tests/test_basic_imports.py`)
-    - [ ] Implement tests to verify imports of:
-        - [ ] `BaselineTextClassifier`
-        - [ ] `compute_classification_metrics`
-        - [ ] FastAPI `app` from `src.api.server`
-    - [ ] Ensure `pytest` runs without errors.
+- [x] **6.1. Import Test** (`tests/test_basic_imports.py`)
+    - [x] Implement tests to verify imports of:
+        - [x] `BaselineTextClassifier`
+        - [x] `compute_classification_metrics`
+        - [ ] FastAPI `app` from `src.api.server` ⏳
+    - [x] Ensure `pytest` runs without errors.
 - [ ] **6.2. Minimal Integration Test (Optional)**
     - [ ] Add a test that:
         - [ ] Creates a tiny inline dataset.
@@ -281,13 +281,13 @@ This is a comprehensive task list for implementing an end-to-end text classifica
 
 ### 9. Dataset Selection & Finalization
 
-- [ ] **9.1. Dataset Choice**
-    - [ ] Compare candidate datasets:
-        - [ ] Hate Speech / Toxic Comment (e.g., Jigsaw Toxicity)
-        - [ ] Fake News (e.g., LIAR / FakeNewsNet)
-        - [ ] Intent Classification (e.g., CLINC150 / Banking77)
-    - [ ] Decide on **one primary dataset** for the project.
-    - [ ] Document the choice and rationale in `README.md` (and later in the report).
+- [x] **9.1. Dataset Choice**
+    - [x] Compare candidate datasets:
+        - [x] Hate Speech / Toxic Comment (e.g., Jigsaw Toxicity) ✅ **SELECTED**
+        - [x] Fake News (e.g., LIAR / FakeNewsNet)
+        - [x] Intent Classification (e.g., CLINC150 / Banking77)
+    - [x] Decide on **one primary dataset** for the project.
+    - [x] Document the choice and rationale in `README.md` (and later in the report).
 
 - [ ] **9.2. Dataset Characterization**
     - [ ] In `notebooks/eda.ipynb`, add:
@@ -317,18 +317,18 @@ This is a comprehensive task list for implementing an end-to-end text classifica
 
 > These tasks make sure we implement proposal Section 7 (“Cloud-Based Evaluation”) and satisfy the **Performance Analysis** topic.
 
-- [ ] **11.1. Offline Evaluation (Metrics)**
-    - [ ] Extend `src/models/evaluation.py` to optionally compute:
-        - [ ] ROC-AUC (for binary or one-vs-rest scenarios where applicable).
-    - [ ] Ensure both:
-        - [ ] Baseline script.
-        - [ ] Transformer script.
+- [x] **11.1. Offline Evaluation (Metrics)**
+    - [x] Extend `src/models/evaluation.py` to optionally compute:
+        - [x] ROC-AUC (for binary or one-vs-rest scenarios where applicable).
+    - [x] Ensure both:
+        - [x] Baseline script.
+        - [ ] Transformer script. ⏳
       print and/or log:
-        - [ ] Accuracy
-        - [ ] Macro F1
-        - [ ] Weighted F1
-        - [ ] ROC-AUC (if labels support it)
-    - [ ] Save a small summary table (e.g., CSV/Markdown) comparing baselines vs Transformer.
+        - [x] Accuracy
+        - [x] Macro F1
+        - [x] Weighted F1
+        - [x] ROC-AUC (if labels support it)
+    - [ ] Save a small summary table (e.g., CSV/Markdown) comparing baselines vs Transformer. ⏳
 
 - [ ] **11.2. Online Evaluation – Local API**
     - [ ] Implement a simple load-test script `scripts/load_test_local.py`:
