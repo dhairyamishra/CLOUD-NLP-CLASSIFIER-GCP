@@ -235,11 +235,12 @@ class ModelManager:
         
         # For baseline models, we need to get classes from the classifier
         classifier = self.pipeline.named_steps['classifier']
-        self.classes = classifier.classes_.tolist()
+        # Convert to strings to ensure Pydantic validation passes
+        self.classes = [str(label) for label in classifier.classes_.tolist()]
         
         # Create label mappings
-        self.id2label = {i: label for i, label in enumerate(self.classes)}
-        self.label2id = {label: i for i, label in enumerate(self.classes)}
+        self.id2label = {i: str(label) for i, label in enumerate(self.classes)}
+        self.label2id = {str(label): i for i, label in enumerate(self.classes)}
         
         logger.info(f"Number of classes: {len(self.classes)}")
         logger.info(f"Classes: {self.classes}")
@@ -329,7 +330,9 @@ class ModelManager:
         start_time = time.time()
         
         # Make prediction
-        predicted_label = self.pipeline.predict([text])[0]
+        predicted_label_raw = self.pipeline.predict([text])[0]
+        # Convert to string to ensure consistency
+        predicted_label = str(predicted_label_raw)
         
         # Get probabilities if available
         classifier = self.pipeline.named_steps['classifier']
@@ -360,7 +363,7 @@ class ModelManager:
             probs_np = np.ones(len(self.classes)) / len(self.classes)
         
         # Get predicted class index and confidence
-        predicted_idx = self.label2id[predicted_label]
+        predicted_idx = self.label2id[str(predicted_label)]
         confidence = float(probs_np[predicted_idx])
         
         # Calculate inference time
