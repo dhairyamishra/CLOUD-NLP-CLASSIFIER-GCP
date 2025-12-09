@@ -1,0 +1,66 @@
+# Configuration for Transformer Model (DistilBERT)
+
+# Model settings
+model:
+  name: "distilbert-base-uncased"
+  num_labels: null  # Will be set automatically based on dataset
+  max_seq_length: 128  # Maximum sequence length for tokenization
+
+# Training hyperparameters
+training:
+  train_batch_size: 16
+  eval_batch_size: 32
+  learning_rate: 2.0e-5
+  num_train_epochs: 3
+  weight_decay: 0.01
+  warmup_ratio: 0.1  # Warmup steps as proportion of total steps
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  
+  # Optimization
+  fp16: false  # Set to true if GPU supports mixed precision
+  fp16_opt_level: "O1"
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 3
+    metric: "eval_f1_macro"  # Metric to monitor
+    mode: "max"  # "max" for metrics to maximize, "min" for loss
+  
+  # Learning rate scheduler
+  lr_scheduler:
+    type: "linear"  # Options: "linear", "cosine", "constant"
+  
+  # Logging
+  logging_steps: 50
+  eval_steps: 100
+  save_steps: 100
+  save_total_limit: 3  # Keep only best 3 checkpoints
+
+# Data paths
+data:
+  train_path: "data/processed/train.csv"
+  val_path: "data/processed/val.csv"
+  test_path: "data/processed/test.csv"
+
+# Model save paths
+model_save_dir: "models/transformer/distilbert"
+
+# Reproducibility
+seed: 42
+
+# Evaluation settings
+evaluation:
+  metrics:
+    - "accuracy"
+    - "f1_macro"
+    - "f1_weighted"
+    - "precision_macro"
+    - "recall_macro"
+  save_confusion_matrix: true
+  save_classification_report: true
+  compute_roc_auc: true  # For binary classification or OvR
+
+# Device settings
+device: "cuda"  # Options: "cuda", "cpu", "mps" (for Mac M1/M2)
