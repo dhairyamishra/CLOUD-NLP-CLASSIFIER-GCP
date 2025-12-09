@@ -103,6 +103,8 @@ python -m src.models.train_baselines
 
 ### 5. Train Transformer Model
 
+#### Local Training (Quick Testing)
+
 ```bash
 # Cross-platform Python script (Recommended)
 python run_transformer.py
@@ -110,11 +112,56 @@ python run_transformer.py
 # Or run directly:
 python -m src.models.transformer_training
 
-# Or use the shell script:
-bash scripts/run_transformer_local.sh
+# Or use platform-specific scripts:
+# Windows: .\scripts\run_transformer_local.ps1
+# Linux/Mac: bash scripts/run_transformer_local.sh
 ```
 
 **Note:** Transformer training requires a GPU for reasonable speed. Set `device: "cpu"` in `config/config_transformer.yaml` if GPU is unavailable.
+
+#### Cloud Training (Production)
+
+For production-quality models with optimized settings:
+
+```bash
+# Using cloud configuration locally
+python -m src.models.transformer_training \
+  --config config/config_transformer_cloud.yaml \
+  --mode cloud \
+  --fp16
+
+# Or use the cloud training script:
+# Windows: .\scripts\run_transformer_cloud.ps1
+# Linux/Mac: bash scripts/run_gcp_training.sh
+```
+
+#### Advanced Training Options
+
+```bash
+# Override specific parameters
+python -m src.models.transformer_training \
+  --config config/config_transformer.yaml \
+  --mode local \
+  --epochs 5 \
+  --batch-size 32 \
+  --learning-rate 3e-5 \
+  --fp16 \
+  --output-dir models/transformer/custom
+
+# Disable early stopping
+python -m src.models.transformer_training \
+  --no-early-stopping
+
+# Use different learning rate scheduler
+# Edit config YAML: lr_scheduler.type = "cosine" | "linear" | "polynomial"
+```
+
+**Training Features:**
+- ✅ Early stopping based on validation F1/loss
+- ✅ Learning rate schedulers (linear, cosine, polynomial, constant)
+- ✅ Mixed precision training (FP16) for faster GPU training
+- ✅ Gradient accumulation for effective larger batch sizes
+- ✅ Automatic best model selection
 
 ### 6. Run API Server (Local)
 
@@ -308,7 +355,162 @@ python run_transformer.py
 ls -la models/transformer/distilbert/
 ```
 
-## ☁️ GCP Deployment
+## ☁️ GCP Cloud Training
+
+### Why Train on GCP?
+
+Training transformer models on cloud GPUs offers significant advantages:
+- **Speed**: 10-50x faster than CPU training
+- **Scalability**: Access to powerful GPUs (T4, V100, A100)
+- **Cost-Effective**: Pay only for training time (~$0.35-$2.50/hour)
+- **No Local Setup**: No need for expensive local GPU hardware
+
+### GCP GPU VM Setup
+
+#### 1. Create a GCP GPU VM Instance
+
+```bash
+# Set your GCP project
+export PROJECT_ID=your-gcp-project-id
+gcloud config set project $PROJECT_ID
+
+# Enable Compute Engine API
+gcloud services enable compute.googleapis.com
+
+# Create a GPU VM instance (NVIDIA T4 GPU)
+gcloud compute instances create nlp-training-vm \
+  --zone=us-central1-a \
+  --machine-type=n1-standard-4 \
+  --accelerator=type=nvidia-tesla-t4,count=1 \
+  --image-family=pytorch-latest-gpu \
+  --image-project=deeplearning-platform-release \
+  --boot-disk-size=100GB \
+  --maintenance-policy=TERMINATE \
+  --metadata="install-nvidia-driver=True"
+
+# Alternative: Use V100 for faster training (more expensive)
+# --machine-type=n1-standard-8 \
+# --accelerator=type=nvidia-tesla-v100,count=1
+```
+
+**GPU Options & Pricing (us-central1):**
+- **T4** (16GB): ~$0.35/hour - Good for DistilBERT
+- **V100** (16GB): ~$2.48/hour - Faster training
+- **A100** (40GB): ~$3.67/hour - Largest models
+
+#### 2. SSH into the VM
+
+```bash
+# SSH into the instance
+gcloud compute ssh nlp-training-vm --zone=us-central1-a
+
+# Verify GPU is available
+nvidia-smi
+```
+
+#### 3. Setup Training Environment
+
+```bash
+# Clone your repository
+git clone https://github.com/YOUR_USERNAME/CLOUD-NLP-CLASSIFIER-GCP.git
+cd CLOUD-NLP-CLASSIFIER-GCP
+
+# Run the setup script (installs dependencies, downloads data)
+bash scripts/setup_gcp_training.sh
+
+# This script will:
+# - Install Python 3.11 and dependencies
+# - Install CUDA drivers (if needed)
+# - Create virtual environment
+# - Install PyTorch with GPU support
+# - Download and preprocess dataset
+```
+
+#### 4. Start Training
+
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Start training with cloud configuration
+bash scripts/run_gcp_training.sh
+
+# Or run directly with custom settings
+python -m src.models.transformer_training \
+  --config config/config_transformer_cloud.yaml \
+  --mode cloud \
+  --fp16 \
+  --epochs 10 \
+  --batch-size 64
+```
+
+**Training will:**
+- Use optimized cloud settings (FP16, larger batches)
+- Save model to `models/transformer/distilbert_cloud/`
+- Log training progress to `training.log`
+- Take approximately 20-40 minutes on T4 GPU
+
+#### 5. Monitor Training
+
+```bash
+# In another terminal, SSH and monitor
+gcloud compute ssh nlp-training-vm --zone=us-central1-a
+
+# Watch GPU usage
+watch -n 1 nvidia-smi
+
+# Follow training logs
+tail -f models/transformer/distilbert_cloud/training.log
+```
+
+#### 6. Download Trained Model
+
+```bash
+# From your local machine, download the trained model
+gcloud compute scp --recurse \
+  nlp-training-vm:~/CLOUD-NLP-CLASSIFIER-GCP/models/transformer/distilbert_cloud \
+  ./models/transformer/ \
+  --zone=us-central1-a
+
+# Or use Google Cloud Storage (recommended for large models)
+# On VM: Upload to GCS
+gsutil -m cp -r models/transformer/distilbert_cloud gs://your-bucket-name/models/
+
+# On local: Download from GCS
+gsutil -m cp -r gs://your-bucket-name/models/distilbert_cloud ./models/transformer/
+```
+
+#### 7. Stop/Delete VM (Important!)
+
+```bash
+# Stop the VM (can restart later, still charges for disk)
+gcloud compute instances stop nlp-training-vm --zone=us-central1-a
+
+# Delete the VM (no charges, but need to recreate)
+gcloud compute instances delete nlp-training-vm --zone=us-central1-a
+```
+
+**💡 Cost Saving Tips:**
+- Delete VM immediately after training completes
+- Use preemptible instances for 60-80% cost savings (may be interrupted)
+- Use Cloud Storage for model artifacts instead of large boot disks
+- Monitor training with early stopping to avoid unnecessary epochs
+
+### Local vs Cloud Configuration Comparison
+
+| Setting | Local (Testing) | Cloud (Production) |
+|---------|----------------|-------------------|
+| **Batch Size** | 32 | 64 |
+| **Epochs** | 3 | 10 |
+| **Max Seq Length** | 128 | 256 |
+| **FP16** | Optional | Enabled |
+| **Gradient Accumulation** | 1 | 2 |
+| **LR Scheduler** | Linear | Cosine |
+| **Early Stopping** | 3 patience | 5 patience |
+| **Training Time** | 1-2 hours (CPU) | 20-40 min (GPU) |
+| **Expected Accuracy** | 85-90% | 90-95% |
+
+## ☁️ GCP Deployment (Inference)
 
 ### Prerequisites
 

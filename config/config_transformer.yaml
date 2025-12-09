@@ -1,42 +1,49 @@
 # Configuration for Transformer Model (DistilBERT)
+# This is the LOCAL/TESTING configuration with minimal settings for fast iteration
 
 # Model settings
 model:
   name: "distilbert-base-uncased"
   num_labels: null  # Will be set automatically based on dataset
-  max_seq_length: 32  # SUPER REDUCED for ultra-fast testing
+  max_seq_length: 128  # Standard length for most text classification tasks
 
-# Training hyperparameters
+# Training hyperparameters (LOCAL MODE - Fast Testing)
 training:
-  train_batch_size: 64  # MAXIMIZED for fastest training
-  eval_batch_size: 128  # MAXIMIZED for fastest evaluation
-  learning_rate: 5.0e-5  # Higher for faster convergence
-  num_train_epochs: 1   # MINIMAL - just 1 epoch
+  train_batch_size: 32  # Moderate batch size for local GPU/CPU
+  eval_batch_size: 64   # Larger batch for evaluation
+  learning_rate: 2.0e-5  # Standard DistilBERT learning rate
+  num_train_epochs: 3    # Reasonable for local testing
   weight_decay: 0.01
-  warmup_ratio: 0.0     # NO WARMUP for fastest start
+  warmup_ratio: 0.1      # 10% warmup steps
+  warmup_steps: 0        # Alternative to warmup_ratio (set to 0 to use ratio)
   gradient_accumulation_steps: 1
   max_grad_norm: 1.0
   
   # Optimization
-  fp16: false  # Set to true if GPU supports mixed precision
-  fp16_opt_level: "O1"
+  fp16: false  # Set to true if GPU supports mixed precision (NVIDIA with Tensor Cores)
+  fp16_opt_level: "O1"  # Options: O0, O1, O2, O3 (O1 recommended)
+  
+  # DataLoader settings
+  dataloader_num_workers: 0  # Set to 2-4 for faster data loading if CPU allows
+  dataloader_pin_memory: true  # Speeds up CPU-to-GPU transfer
   
   # Early stopping
   early_stopping:
-    enabled: false  # DISABLED for quick testing
-    patience: 3
-    metric: "eval_f1_macro"  # Metric to monitor
-    mode: "max"  # "max" for metrics to maximize, "min" for loss
+    enabled: true  # Enable for production training
+    patience: 3    # Stop if no improvement for 3 evaluation cycles
+    metric: "eval_f1_macro"  # Metric to monitor (eval_loss, eval_accuracy, eval_f1_macro, etc.)
+    mode: "max"    # "max" for metrics to maximize, "min" for loss
   
   # Learning rate scheduler
+  # Options: linear, cosine, cosine_with_restarts, polynomial, constant, constant_with_warmup
   lr_scheduler:
-    type: "constant"  # NO SCHEDULING for speed
+    type: "linear"  # Linear decay with warmup (recommended for transformers)
   
-  # Logging
-  logging_steps: 10      # Very frequent updates
-  eval_steps: 500        # EVAL ONLY ONCE at end
-  save_steps: 500        # SAVE ONLY ONCE at end
-  save_total_limit: 1    # Only 1 checkpoint
+  # Logging and checkpointing
+  logging_steps: 50      # Log every 50 steps
+  eval_steps: 200        # Evaluate every 200 steps
+  save_steps: 200        # Save checkpoint every 200 steps
+  save_total_limit: 2    # Keep only 2 best checkpoints
 
 # Data paths
 data:

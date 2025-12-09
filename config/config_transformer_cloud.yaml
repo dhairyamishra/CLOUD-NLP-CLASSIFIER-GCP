@@ -1,0 +1,88 @@
+# Configuration for Transformer Model (DistilBERT) - CLOUD TRAINING MODE
+# Optimized for GCP GPU VM (e.g., n1-standard-4 with 1x NVIDIA T4/V100)
+
+# Model settings
+model:
+  name: "distilbert-base-uncased"
+  num_labels: null  # Will be set automatically based on dataset
+  max_seq_length: 256  # Longer sequences for better performance
+
+# Training hyperparameters (CLOUD MODE - Production Training)
+training:
+  train_batch_size: 64   # Larger batch size for GPU
+  eval_batch_size: 128   # Even larger for evaluation
+  learning_rate: 3.0e-5  # Slightly higher for larger batches
+  num_train_epochs: 10   # More epochs for better convergence
+  weight_decay: 0.01
+  warmup_ratio: 0.1      # 10% warmup steps
+  warmup_steps: 0        # Alternative to warmup_ratio (set to 0 to use ratio)
+  gradient_accumulation_steps: 2  # Effective batch size = 64 * 2 = 128
+  max_grad_norm: 1.0
+  
+  # Optimization
+  fp16: true  # Enable mixed precision for faster training on GPU
+  fp16_opt_level: "O1"  # Automatic mixed precision
+  
+  # DataLoader settings
+  dataloader_num_workers: 4  # Parallel data loading
+  dataloader_pin_memory: true  # Speeds up CPU-to-GPU transfer
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 5    # More patience for cloud training
+    metric: "eval_f1_macro"
+    mode: "max"
+  
+  # Learning rate scheduler
+  # Options: linear, cosine, cosine_with_restarts, polynomial, constant, constant_with_warmup
+  lr_scheduler:
+    type: "cosine"  # Cosine annealing for smoother convergence
+  
+  # Logging and checkpointing
+  logging_steps: 20      # More frequent logging
+  eval_steps: 100        # Evaluate every 100 steps
+  save_steps: 100        # Save checkpoint every 100 steps
+  save_total_limit: 3    # Keep 3 best checkpoints
+
+# Data paths (adjust for cloud storage if needed)
+data:
+  train_path: "data/processed/train.csv"
+  val_path: "data/processed/val.csv"
+  test_path: "data/processed/test.csv"
+
+# Model save paths
+model_save_dir: "models/transformer/distilbert_cloud"
+
+# Reproducibility
+seed: 42
+
+# Evaluation settings
+evaluation:
+  metrics:
+    - "accuracy"
+    - "f1_macro"
+    - "f1_weighted"
+    - "precision_macro"
+    - "recall_macro"
+  save_confusion_matrix: true
+  save_classification_report: true
+  compute_roc_auc: true
+
+# Device settings
+device: "cuda"  # Force CUDA for cloud training
+
+# Cloud-specific overrides (applied when --mode=cloud is used)
+cloud_overrides:
+  training:
+    train_batch_size: 64
+    eval_batch_size: 128
+    num_train_epochs: 10
+    fp16: true
+    gradient_accumulation_steps: 2
+    dataloader_num_workers: 4
+    lr_scheduler:
+      type: "cosine"
+  model:
+    max_seq_length: 256
+  model_save_dir: "models/transformer/distilbert_cloud"

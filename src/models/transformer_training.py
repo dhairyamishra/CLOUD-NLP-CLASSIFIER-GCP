@@ -1,13 +1,21 @@
 """
 Transformer model training script using DistilBERT for text classification.
+
+Supports:
+- Advanced learning rate schedulers (linear, cosine, polynomial, constant)
+- Early stopping based on validation metrics
+- Mixed precision training (FP16)
+- Cloud training mode with optimized settings
+- Local vs Cloud configuration
 """
 import os
 import json
 import logging
 import time
 import random
+import argparse
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import numpy as np
 import pandas as pd
 import yaml
@@ -21,7 +29,8 @@ from transformers import (
     Trainer,
     TrainingArguments,
     EarlyStoppingCallback,
-    TrainerCallback
+    TrainerCallback,
+    get_scheduler
 )
 from datasets import Dataset as HFDataset
 
@@ -31,6 +40,68 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Train DistilBERT transformer model for text classification"
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="config/config_transformer.yaml",
+        help="Path to configuration YAML file"
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["local", "cloud"],
+        default="local",
+        help="Training mode: 'local' for local training, 'cloud' for cloud training"
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help="Override output directory for model artifacts"
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=None,
+        help="Override number of training epochs"
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=None,
+        help="Override training batch size"
+    )
+    parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=None,
+        help="Override learning rate"
+    )
+    parser.add_argument(
+        "--fp16",
+        action="store_true",
+        help="Enable mixed precision training (FP16)"
+    )
+    parser.add_argument(
+        "--no-early-stopping",
+        action="store_true",
+        help="Disable early stopping"
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Override random seed"
+    )
+    
+    return parser.parse_args()
 
 
 def set_seed(seed: int):
@@ -48,6 +119,65 @@ def load_config(config_path: str = "config/config_transformer.yaml") -> dict:
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     logger.info(f"Configuration loaded from: {config_path}")
+    return config
+
+
+def apply_cli_overrides(config: dict, args: argparse.Namespace) -> dict:
+    """
+    Apply command-line argument overrides to configuration.
+    
+    Args:
+        config: Base configuration dictionary
+        args: Parsed command-line arguments
+        
+    Returns:
+        Updated configuration dictionary
+    """
+    # Apply mode-specific settings
+    if args.mode == "cloud":
+        logger.info("Applying cloud training mode settings...")
+        # Cloud mode typically uses larger batches, more epochs, and enables optimizations
+        if 'cloud_overrides' in config:
+            cloud_config = config['cloud_overrides']
+            # Apply cloud overrides
+            for key, value in cloud_config.items():
+                if key in config:
+                    if isinstance(value, dict) and isinstance(config[key], dict):
+                        config[key].update(value)
+                    else:
+                        config[key] = value
+            logger.info("Cloud overrides applied from config file")
+    
+    # Apply CLI overrides (these take highest priority)
+    if args.output_dir is not None:
+        config['model_save_dir'] = args.output_dir
+        logger.info(f"Output directory overridden: {args.output_dir}")
+    
+    if args.epochs is not None:
+        config['training']['num_train_epochs'] = args.epochs
+        logger.info(f"Epochs overridden: {args.epochs}")
+    
+    if args.batch_size is not None:
+        config['training']['train_batch_size'] = args.batch_size
+        config['training']['eval_batch_size'] = args.batch_size
+        logger.info(f"Batch size overridden: {args.batch_size}")
+    
+    if args.learning_rate is not None:
+        config['training']['learning_rate'] = args.learning_rate
+        logger.info(f"Learning rate overridden: {args.learning_rate}")
+    
+    if args.fp16:
+        config['training']['fp16'] = True
+        logger.info("FP16 mixed precision enabled via CLI")
+    
+    if args.no_early_stopping:
+        config['training']['early_stopping']['enabled'] = False
+        logger.info("Early stopping disabled via CLI")
+    
+    if args.seed is not None:
+        config['seed'] = args.seed
+        logger.info(f"Random seed overridden: {args.seed}")
+    
     return config
 
 
@@ -207,7 +337,14 @@ def train_model(
     output_dir: str
 ) -> Tuple[Trainer, float]:
     """
-    Train the transformer model.
+    Train the transformer model with advanced optimizations.
+    
+    Supports:
+    - Multiple learning rate schedulers (linear, cosine, polynomial, constant)
+    - Early stopping based on validation metrics
+    - Mixed precision training (FP16)
+    - Gradient accumulation
+    - Learning rate warmup
     
     Returns:
         trainer: Trained Trainer object
@@ -218,6 +355,32 @@ def train_model(
     # Training arguments
     training_config = config['training']
     
+    # Determine learning rate scheduler type
+    lr_scheduler_config = training_config.get('lr_scheduler', {})
+    lr_scheduler_type = lr_scheduler_config.get('type', 'linear')
+    
+    # Map scheduler types to transformers scheduler names
+    scheduler_mapping = {
+        'linear': 'linear',
+        'cosine': 'cosine',
+        'cosine_with_restarts': 'cosine_with_restarts',
+        'polynomial': 'polynomial',
+        'constant': 'constant',
+        'constant_with_warmup': 'constant_with_warmup'
+    }
+    
+    lr_scheduler_type_mapped = scheduler_mapping.get(lr_scheduler_type, 'linear')
+    logger.info(f"Using learning rate scheduler: {lr_scheduler_type_mapped}")
+    
+    # Check FP16 support
+    fp16_enabled = training_config.get('fp16', False)
+    if fp16_enabled:
+        if torch.cuda.is_available():
+            logger.info("FP16 mixed precision training enabled")
+        else:
+            logger.warning("FP16 requested but CUDA not available, disabling FP16")
+            fp16_enabled = False
+    
     training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=training_config['num_train_epochs'],
@@ -226,6 +389,8 @@ def train_model(
         learning_rate=training_config['learning_rate'],
         weight_decay=training_config['weight_decay'],
         warmup_ratio=training_config['warmup_ratio'],
+        warmup_steps=training_config.get('warmup_steps', 0),
+        lr_scheduler_type=lr_scheduler_type_mapped,
         gradient_accumulation_steps=training_config['gradient_accumulation_steps'],
         max_grad_norm=training_config['max_grad_norm'],
         logging_steps=training_config['logging_steps'],
@@ -237,10 +402,13 @@ def train_model(
         load_best_model_at_end=True,
         metric_for_best_model=training_config['early_stopping']['metric'],
         greater_is_better=(training_config['early_stopping']['mode'] == 'max'),
-        fp16=training_config['fp16'],
+        fp16=fp16_enabled,
+        fp16_opt_level=training_config.get('fp16_opt_level', 'O1'),
         logging_dir=f"{output_dir}/logs",
         report_to="none",  # Disable wandb/tensorboard for now
-        seed=config['seed']
+        seed=config['seed'],
+        dataloader_num_workers=training_config.get('dataloader_num_workers', 0),
+        dataloader_pin_memory=training_config.get('dataloader_pin_memory', True)
     )
     
     # Callbacks
@@ -253,10 +421,28 @@ def train_model(
         )
         callbacks.append(early_stopping)
         logger.info(f"Early stopping enabled with patience: {training_config['early_stopping']['patience']}")
+        logger.info(f"Monitoring metric: {training_config['early_stopping']['metric']} ({training_config['early_stopping']['mode']})")
+    else:
+        logger.info("Early stopping disabled")
     
     # Add timing callback
     timing_callback = TimingCallback()
     callbacks.append(timing_callback)
+    
+    # Log training configuration
+    logger.info("=" * 60)
+    logger.info("Training Configuration:")
+    logger.info(f"  Epochs: {training_config['num_train_epochs']}")
+    logger.info(f"  Train Batch Size: {training_config['train_batch_size']}")
+    logger.info(f"  Eval Batch Size: {training_config['eval_batch_size']}")
+    logger.info(f"  Learning Rate: {training_config['learning_rate']}")
+    logger.info(f"  Weight Decay: {training_config['weight_decay']}")
+    logger.info(f"  Warmup Ratio: {training_config['warmup_ratio']}")
+    logger.info(f"  LR Scheduler: {lr_scheduler_type_mapped}")
+    logger.info(f"  Gradient Accumulation Steps: {training_config['gradient_accumulation_steps']}")
+    logger.info(f"  Max Grad Norm: {training_config['max_grad_norm']}")
+    logger.info(f"  FP16: {fp16_enabled}")
+    logger.info("=" * 60)
     
     # Initialize trainer
     trainer = Trainer(
@@ -384,8 +570,15 @@ def main():
     logger.info("Starting Transformer Training Pipeline")
     logger.info("=" * 80)
     
+    # Parse command-line arguments
+    args = parse_args()
+    logger.info(f"Training mode: {args.mode}")
+    
     # Load configuration
-    config = load_config()
+    config = load_config(args.config)
+    
+    # Apply CLI overrides
+    config = apply_cli_overrides(config, args)
     
     # Set random seed
     set_seed(config['seed'])
