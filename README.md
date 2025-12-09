@@ -8,7 +8,8 @@ This project implements a production-grade hate speech classification system wit
 
 - **Classical ML Baselines**: TF-IDF + Logistic Regression/SVM
 - **Transformer Model**: Fine-tuned DistilBERT with advanced training optimizations
-- **REST API**: FastAPI server with comprehensive error handling and validation
+- **Multi-Head Toxicity Model**: Specialized multi-label classification for 6 toxic categories (Jigsaw)
+- **REST API**: FastAPI server supporting both single-label and multi-label models
 - **Containerization**: Docker with multi-environment support (dev/prod)
 - **Cloud Training**: GCP GPU VM support for efficient model training
 - **Cloud Deployment**: Google Cloud Platform (Cloud Run) - Ready for deployment
@@ -198,29 +199,57 @@ python -m src.models.transformer_training \
 - ✅ **Automatic Best Model Selection**: Saves best checkpoint based on validation metrics
 - ✅ **Comprehensive Logging**: Training progress, metrics, and timing information
 
-### 6. Run API Server (Local)
+### 6. Train Multi-Head Toxicity Model (Jigsaw)
+
+This project also supports multi-label toxicity classification (Toxic, Severe Toxic, Obscene, Threat, Insult, Identity Hate) using a custom multi-head DistilBERT model.
+
+```bash
+# Train the toxicity model
+python -m src.models.train_toxicity --config config/config_toxicity.yaml
+
+# Override epochs for quick testing
+python -m src.models.train_toxicity --epochs 1
+```
+
+**Features:**
+- **Architecture**: Shared DistilBERT encoder with 6 separate classification heads
+- **Plotting**: Automatically generates `training_loss_plot.png`
+- **Config**: Dedicated configuration at `config/config_toxicity.yaml`
+- **Output**: Saves model and tokenizer to `models/toxicity_multi_head/`
+
+### 7. Run API Server (Local)
+
+The server supports both the standard single-label model and the new multi-head toxicity model.
 
 ```bash
 # Start FastAPI server
 uvicorn src.api.server:app --host 0.0.0.0 --port 8000 --reload
-
-# Or use the shell script:
-bash scripts/run_api_local.sh
 ```
 
 Test the API:
 
+#### Standard Prediction (Single Label)
 ```bash
-# Health check
-curl http://localhost:8000/health
-
-# Prediction
-curl -X POST http://localhost:8000/predict \
+curl -X POST http://localhost:8000/api/v1/classify/single \
   -H "Content-Type: application/json" \
   -d '{"text": "This is a test message"}'
 ```
 
-### 7. Run Tests
+#### Multi-Label Toxicity Prediction
+```bash
+curl -X POST http://localhost:8000/api/v1/classify/single \
+  -H "Content-Type: application/json" \
+  -d '{"text": "You are extremely rude and offensive!"}'
+```
+
+#### Explainability (Token Importance)
+```bash
+curl -X POST http://localhost:8000/api/v1/explain \
+  -H "Content-Type: application/json" \
+  -d '{"text": "You are extremely rude and offensive!", "focus_label": "toxic"}'
+```
+
+### 8. Run Tests
 
 ```bash
 # Run all tests with the universal test runner
