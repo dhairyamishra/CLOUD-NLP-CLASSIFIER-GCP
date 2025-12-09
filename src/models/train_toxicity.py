@@ -1,10 +1,11 @@
 """
-Training script for multi-head toxicity classification.
-Migrated from nlp-on-cloud/trainer.py to match CLOUD-NLP-CLASSIFIER-GCP structure.
+Training script for toxicity classification using DistilBertForSequenceClassification.
+Compatible with CLOUD-NLP-CLASSIFIER-GCP server's ModelManager.
 """
 import os
 import argparse
 import random
+import json
 import yaml
 import logging
 import numpy as np
@@ -15,10 +16,9 @@ from pathlib import Path
 
 import torch
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, DistilBertForSequenceClassification
 from sklearn.model_selection import train_test_split
-
-from src.models.multi_head_model import MultiHeadToxicityModel
+from sklearn.metrics import accuracy_score, f1_score
 
 # Configure logging
 logging.basicConfig(
@@ -28,7 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train Multi-Head Toxicity Model")
+    parser = argparse.ArgumentParser(description="Train Toxicity Model")
     parser.add_argument("--config", type=str, default="config/config_toxicity.yaml", help="Path to config file")
     parser.add_argument("--epochs", type=int, default=None, help="Override epochs")
     return parser.parse_args()
@@ -58,7 +58,8 @@ class JigsawToxicityDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        text = str(row["comment_text"]) if "comment_text" in row else str(row["text"])
+        # Handle cases where column might be 'comment_text' or 'text'
+        text = str(row.get("comment_text", row.get("text", "")))
 
         enc = self.tokenizer(
             text,
@@ -70,17 +71,17 @@ class JigsawToxicityDataset(Dataset):
 
         item = {k: v.squeeze(0) for k, v in enc.items()}
 
-        # Add each label as a separate field
+        # Create a single float tensor for labels (Multi-label classification)
+        labels = []
         for col in self.label_columns:
-            if col in row:
-                item[col] = torch.tensor(row[col], dtype=torch.float)
-            else:
-                # Handle missing labels if any (though typically training data has them)
-                item[col] = torch.tensor(0.0, dtype=torch.float)
+            val = row[col] if col in row else 0.0
+            labels.append(float(val))
+        
+        item["labels"] = torch.tensor(labels, dtype=torch.float)
 
         return item
 
-def train_one_epoch(model, dataloader, optimizer, epoch_idx, step_losses, global_step, device, label_columns, plot_interval):
+def train_one_epoch(model, dataloader, optimizer, epoch_idx, step_losses, global_step, device, plot_interval):
     model.train()
     running_loss = 0.0
     n_batches = 0
@@ -88,18 +89,18 @@ def train_one_epoch(model, dataloader, optimizer, epoch_idx, step_losses, global
     for batch in dataloader:
         input_ids = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
-
-        label_dict = {
-            name: batch[name].to(device) for name in label_columns
-        }
+        labels = batch["labels"].to(device)
 
         optimizer.zero_grad()
+        
+        # DistilBertForSequenceClassification will use BCEWithLogitsLoss if labels are float and problem_type is multi_label
         outputs = model(
             input_ids=input_ids,
             attention_mask=attention_mask,
-            labels=label_dict,
+            labels=labels
         )
-        loss = outputs["loss"]
+        
+        loss = outputs.loss
         loss.backward()
         optimizer.step()
 
@@ -122,32 +123,42 @@ def train_one_epoch(model, dataloader, optimizer, epoch_idx, step_losses, global
 def evaluate(model, dataloader, device, label_columns, threshold=0.5):
     model.eval()
     all_losses = []
-    all_preds = {name: [] for name in label_columns}
-    all_targets = {name: [] for name in label_columns}
+    
+    # Store predictions and targets for metrics
+    all_preds = []
+    all_targets = []
 
     for batch in dataloader:
         input_ids = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
-        label_dict = {name: batch[name].to(device) for name in label_columns}
+        labels = batch["labels"].to(device)
 
-        outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=label_dict)
-        loss = outputs["loss"]
+        outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+        loss = outputs.loss
         all_losses.append(loss.item())
-        logits = outputs["logits"]
-
-        for name in label_columns:
-            probs = torch.sigmoid(logits[name])
-            preds = (probs > threshold).float()
-            all_preds[name].append(preds.cpu().numpy())
-            all_targets[name].append(label_dict[name].cpu().numpy())
+        
+        logits = outputs.logits
+        probs = torch.sigmoid(logits)
+        preds = (probs > threshold).float()
+        
+        all_preds.append(preds.cpu().numpy())
+        all_targets.append(labels.cpu().numpy())
 
     avg_loss = float(np.mean(all_losses))
+    
+    all_preds = np.vstack(all_preds)
+    all_targets = np.vstack(all_targets)
+    
+    # Calculate per-class accuracy
     metrics = {}
-    for name in label_columns:
-        preds = np.concatenate(all_preds[name])
-        targets = np.concatenate(all_targets[name])
-        acc = (preds == targets).mean()
-        metrics[name] = {"accuracy": acc}
+    for i, label in enumerate(label_columns):
+        acc = accuracy_score(all_targets[:, i], all_preds[:, i])
+        metrics[label] = {"accuracy": acc}
+    
+    # Calculate global metrics
+    micro_f1 = f1_score(all_targets, all_preds, average='micro', zero_division=0)
+    macro_f1 = f1_score(all_targets, all_preds, average='macro', zero_division=0)
+    metrics["_global"] = {"micro_f1": micro_f1, "macro_f1": macro_f1}
 
     return avg_loss, metrics
 
@@ -181,14 +192,20 @@ def main():
     # Load Data
     train_path = config['data']['train_path']
     try:
+        # Check if file exists
+        if not os.path.exists(train_path):
+             logger.error(f"Training data not found at {train_path}")
+             return
+
         df_all = pd.read_csv(train_path)
-        # Ensure we have required columns. nlp-on-cloud used 'comment_text'
+        
         # Check against label columns
         label_cols = config['model']['labels']
         missing = [c for c in label_cols if c not in df_all.columns]
         if missing:
              logger.error(f"Missing label columns in {train_path}: {missing}")
              return
+             
     except Exception as e:
         logger.error(f"Failed to load data from {train_path}: {e}")
         return
@@ -197,10 +214,14 @@ def main():
     train_df, val_df = train_test_split(df_all, test_size=0.1, random_state=42)
     logger.info(f"Train size: {len(train_df)}, Val size: {len(val_df)}")
 
-    # Tokenizer
+    # Tokenizer & ID Mappings
     model_name = config['model']['name']
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     max_len = config['model']['max_seq_length']
+    
+    # Prepare label mappings for the model config
+    id2label = {str(i): label for i, label in enumerate(label_cols)}
+    label2id = {label: i for i, label in enumerate(label_cols)}
 
     train_dataset = JigsawToxicityDataset(train_df, tokenizer, label_cols, max_len)
     val_dataset = JigsawToxicityDataset(val_df, tokenizer, label_cols, max_len)
@@ -216,8 +237,15 @@ def main():
         shuffle=False
     )
 
-    # Model
-    model = MultiHeadToxicityModel(model_name, label_cols)
+    # Model Initialization (Standard Hugging Face)
+    logger.info(f"Initializing standard DistilBertForSequenceClassification with {len(label_cols)} labels")
+    model = DistilBertForSequenceClassification.from_pretrained(
+        model_name,
+        num_labels=len(label_cols),
+        problem_type="multi_label_classification",
+        id2label=id2label,
+        label2id=label2id
+    )
     model.to(device)
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=float(config['training']['learning_rate']))
@@ -234,25 +262,33 @@ def main():
     
     for epoch in range(1, num_epochs + 1):
         train_loss, global_step = train_one_epoch(
-            model, train_loader, optimizer, epoch, step_losses, global_step, device, label_cols, plot_interval
+            model, train_loader, optimizer, epoch, step_losses, global_step, device, plot_interval
         )
         val_loss, metrics = evaluate(model, val_loader, device, label_cols, config['training'].get('threshold', 0.5))
 
         logger.info(f"Validation loss: {val_loss:.4f}")
-        for name, m in metrics.items():
-            logger.info(f"  {name:14s} | acc: {m['accuracy']:.4f}")
+        logger.info(f"  Macros | F1: {metrics['_global']['macro_f1']:.4f}")
+        for name in label_cols:
+             if name in metrics:
+                logger.info(f"  {name:14s} | acc: {metrics[name]['accuracy']:.4f}")
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            # Save state dict
-            torch.save(model.state_dict(), os.path.join(save_dir, "model_weights.pt"))
-            # Also save tokenizer
+            # Save standard Hugging Face model
+            # This saves config.json (with id2label) and pytorch_model.bin/model.safetensors
+            model.save_pretrained(save_dir)
             tokenizer.save_pretrained(save_dir)
-            # Save config for reloading labels later
+            
+            # Save labels.json for server compatibility (ModelManager.load_transformer_model expects this)
+            labels_data = {
+                "id2label": id2label,
+                "label2id": label2id,
+                "classes": label_cols
+            }
             with open(os.path.join(save_dir, "labels.json"), 'w') as f:
-                import json
-                json.dump({"labels": label_cols}, f)
-            logger.info(f"Saved best model to {save_dir}")
+                json.dump(labels_data, f, indent=2)
+                
+            logger.info(f"Saved best model and compatibility artifacts to {save_dir}")
 
     # Plot
     if step_losses:
