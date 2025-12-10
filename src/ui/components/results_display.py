@@ -192,13 +192,22 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
         if show_probabilities and probabilities:
             st.markdown("### 📊 Probability Scores")
             
-            # Convert list to dict if needed (API returns list format)
+            # Convert to dict format if needed (API returns various formats)
             if isinstance(probabilities, list):
-                # Assume list format: [score1, score2, ...]
-                # Create generic labels
+                # List format: [score1, score2, ...]
                 prob_dict = {f"Class {i}": score for i, score in enumerate(probabilities)}
+            elif isinstance(probabilities, dict):
+                # Check if it's a nested dict (toxicity model format)
+                # Example: {'toxic': {'score': 0.5}, 'severe_toxic': {'score': 0.1}}
+                first_value = next(iter(probabilities.values()), None)
+                if isinstance(first_value, dict) and 'score' in first_value:
+                    # Flatten nested dict
+                    prob_dict = {k: v['score'] for k, v in probabilities.items()}
+                else:
+                    # Already flat dict
+                    prob_dict = probabilities
             else:
-                prob_dict = probabilities
+                prob_dict = {}
             
             # Define consistent label order (don't sort by value)
             # This ensures consistent axis ordering regardless of probabilities
