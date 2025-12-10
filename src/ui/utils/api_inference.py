@@ -73,7 +73,8 @@ class APIInferenceHandler:
             
             if response.status_code == 200:
                 data = response.json()
-                if data.get('status') == 'healthy':
+                # Accept both 'healthy' and 'ok' as valid status
+                if data.get('status') in ['healthy', 'ok'] and data.get('model_loaded'):
                     model_info = data.get('current_model', 'unknown')
                     return True, f"✅ Connected to API | Model: {model_info}"
                 else:

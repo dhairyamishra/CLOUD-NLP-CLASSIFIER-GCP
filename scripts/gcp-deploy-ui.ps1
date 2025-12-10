@@ -275,12 +275,15 @@ echo '[INFO] Stopping old UI container (if exists)...'
 sudo docker stop nlp-ui 2>/dev/null || true
 sudo docker rm nlp-ui 2>/dev/null || true
 
+# Get VM's internal IP for container communication
+VM_INTERNAL_IP=`$(hostname -I | awk '{print `$1}')
+
 # Run new UI container
 echo '[INFO] Starting new UI container...'
 sudo docker run -d \
     --name nlp-ui \
     -p 8501:8501 \
-    -e API_URL=http://localhost:8000 \
+    -e API_URL=http://`${VM_INTERNAL_IP}:8000 \
     --restart unless-stopped \
     cloud-nlp-ui:latest || exit 1
 
