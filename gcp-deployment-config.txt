@@ -1,0 +1,7 @@
+﻿PROJECT_ID=mnist-k8s-pipeline
+REGION=us-central1
+ZONE=us-central1-a
+STATIC_IP=35.232.76.140
+VM_NAME=nlp-classifier-vm
+MACHINE_TYPE=e2-standard-2
+BOOT_DISK_SIZE=50GB
