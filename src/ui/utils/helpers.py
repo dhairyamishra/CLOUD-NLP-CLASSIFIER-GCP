@@ -50,15 +50,20 @@ def get_sentiment_color(label) -> str:
     # Convert to string if numeric
     label_str = str(label).lower()
     
-    # Check for non-hate/positive indicators FIRST (before checking 'hate')
+    # Check for non-toxic/non-hate/positive indicators FIRST
     # This is important because "non-hate" contains "hate"
-    if 'non-hate' in label_str or 'positive' in label_str or 'neutral' in label_str or label_str == '0':
+    if any(word in label_str for word in ['non-hate', 'non_hate', 'positive', 'neutral', 'identity_hate']):
         return "#28A745"  # Green
-    # Check for hate/negative indicators
-    elif 'hate' in label_str or 'toxic' in label_str or 'negative' in label_str or label_str == '1':
+    # Check for toxic/hate/negative indicators
+    elif any(word in label_str for word in ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'hate', 'negative']):
         return "#DC3545"  # Red
+    # Numeric labels
+    elif label_str == '0':
+        return "#28A745"  # Green (non-toxic)
+    elif label_str == '1':
+        return "#DC3545"  # Red (toxic)
     else:
-        return "#6C757D"  # Gray
+        return "#6C757D"  # Gray (unknown)
 
 
 def get_sentiment_emoji(label) -> str:
@@ -74,14 +79,18 @@ def get_sentiment_emoji(label) -> str:
     # Convert to string if numeric
     label_str = str(label).lower()
     
-    # Check for non-hate/positive indicators FIRST (before checking 'hate')
-    # This is important because "non-hate" contains "hate"
-    if 'non-hate' in label_str or 'positive' in label_str or label_str == '0':
+    # Check for non-toxic/non-hate/positive indicators FIRST
+    if any(word in label_str for word in ['non-hate', 'non_hate', 'positive', 'identity_hate']):
         return "✅"
     elif 'neutral' in label_str:
         return "➖"
-    # Check for hate/negative indicators
-    elif 'hate' in label_str or 'toxic' in label_str or 'negative' in label_str or label_str == '1':
+    # Check for toxic/hate/negative indicators
+    elif any(word in label_str for word in ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'hate', 'negative']):
+        return "⚠️"
+    # Numeric labels
+    elif label_str == '0':
+        return "✅"
+    elif label_str == '1':
         return "⚠️"
     else:
         return "🤖"
