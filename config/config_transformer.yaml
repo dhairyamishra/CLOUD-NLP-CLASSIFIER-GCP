@@ -1,49 +1,62 @@
 # Configuration for Transformer Model (DistilBERT)
-# This is the LOCAL/TESTING configuration with minimal settings for fast iteration
+# FULL-SCALE LOCAL TRAINING - Comprehensive configuration with early stopping
 
 # Model settings
 model:
   name: "distilbert-base-uncased"
   num_labels: null  # Will be set automatically based on dataset
-  max_seq_length: 128  # Standard length for most text classification tasks
+  max_seq_length: 256  # FULL SCALE: Longer sequences for better context understanding
+  dropout: 0.1  # Dropout rate for regularization
+  attention_dropout: 0.1  # Attention dropout rate
 
-# Training hyperparameters (LOCAL MODE - Fast Testing)
+# Training hyperparameters (FULL-SCALE LOCAL MODE)
 training:
-  train_batch_size: 32  # Moderate batch size for local GPU/CPU
+  train_batch_size: 32  # Balanced batch size for local GPU/CPU
   eval_batch_size: 64   # Larger batch for evaluation
-  learning_rate: 2.0e-5  # Standard DistilBERT learning rate
-  num_train_epochs: 3    # Reasonable for local testing
-  weight_decay: 0.01
-  warmup_ratio: 0.1      # 10% warmup steps
+  learning_rate: 3.0e-5  # FULL SCALE: Slightly higher for better convergence
+  num_train_epochs: 15   # FULL SCALE: More epochs with early stopping
+  weight_decay: 0.01     # L2 regularization
+  warmup_ratio: 0.15     # FULL SCALE: 15% warmup steps for stable training
   warmup_steps: 0        # Alternative to warmup_ratio (set to 0 to use ratio)
-  gradient_accumulation_steps: 1
-  max_grad_norm: 1.0
+  gradient_accumulation_steps: 2  # FULL SCALE: Effective batch = 32 * 2 = 64
+  max_grad_norm: 1.0     # Gradient clipping
   
   # Optimization
   fp16: false  # Set to true if GPU supports mixed precision (NVIDIA with Tensor Cores)
   fp16_opt_level: "O1"  # Options: O0, O1, O2, O3 (O1 recommended)
+  optim: "adamw_torch"  # Optimizer: adamw_torch, adamw_hf, adafactor
+  adam_beta1: 0.9       # Adam beta1 parameter
+  adam_beta2: 0.999     # Adam beta2 parameter
+  adam_epsilon: 1.0e-8  # Adam epsilon parameter
   
   # DataLoader settings
-  dataloader_num_workers: 0  # Set to 2-4 for faster data loading if CPU allows
+  dataloader_num_workers: 0  # WINDOWS FIX: Set to 0 to avoid multiprocessing hangs (use 2-4 on Linux/Mac)
   dataloader_pin_memory: true  # Speeds up CPU-to-GPU transfer
+  dataloader_drop_last: false  # Keep all samples
   
-  # Early stopping
+  # Early stopping - COMPREHENSIVE
   early_stopping:
-    enabled: true  # Enable for production training
-    patience: 3    # Stop if no improvement for 3 evaluation cycles
-    metric: "eval_f1_macro"  # Metric to monitor (eval_loss, eval_accuracy, eval_f1_macro, etc.)
+    enabled: true  # CRITICAL: Enable early stopping
+    patience: 5    # FULL SCALE: Stop if no improvement for 5 evaluation cycles
+    metric: "eval_f1_macro"  # Primary metric to monitor
     mode: "max"    # "max" for metrics to maximize, "min" for loss
+    min_delta: 0.001  # Minimum change to qualify as improvement
+    restore_best_weights: true  # Restore best model weights after training
   
-  # Learning rate scheduler
+  # Learning rate scheduler - ADVANCED
   # Options: linear, cosine, cosine_with_restarts, polynomial, constant, constant_with_warmup
   lr_scheduler:
-    type: "linear"  # Linear decay with warmup (recommended for transformers)
+    type: "cosine_with_restarts"  # FULL SCALE: Cosine with restarts for better convergence
+    num_cycles: 3  # Number of restart cycles (for cosine_with_restarts)
   
-  # Logging and checkpointing
-  logging_steps: 50      # Log every 50 steps
-  eval_steps: 200        # Evaluate every 200 steps
-  save_steps: 200        # Save checkpoint every 200 steps
-  save_total_limit: 2    # Keep only 2 best checkpoints
+  # Logging and checkpointing - DETAILED
+  logging_steps: 25      # FULL SCALE: More frequent logging
+  eval_steps: 100        # FULL SCALE: Evaluate every 100 steps
+  save_steps: 100        # FULL SCALE: Save checkpoint every 100 steps
+  save_total_limit: 5    # FULL SCALE: Keep 5 best checkpoints
+  load_best_model_at_end: true  # Load best model at end of training
+  metric_for_best_model: "f1_macro"  # Metric to determine best model
+  greater_is_better: true  # True for accuracy/F1, False for loss
 
 # Data paths
 data:

@@ -1,0 +1,119 @@
+# Configuration for Transformer Model (DistilBERT)
+# INTENSIVE FULL-SCALE TRAINING - Maximum performance configuration
+# Recommended for: GPU training, production models, research experiments
+
+# Model settings
+model:
+  name: "distilbert-base-uncased"
+  num_labels: null  # Will be set automatically based on dataset
+  max_seq_length: 512  # INTENSIVE: Maximum sequence length for full context
+  dropout: 0.15  # Higher dropout for better regularization
+  attention_dropout: 0.15  # Higher attention dropout
+
+# Training hyperparameters (INTENSIVE FULL-SCALE MODE)
+training:
+  train_batch_size: 16  # Smaller batch for longer sequences
+  eval_batch_size: 32   # Evaluation batch size
+  learning_rate: 2.0e-5  # INTENSIVE: Lower LR for stable convergence
+  num_train_epochs: 25   # INTENSIVE: Maximum epochs with early stopping
+  weight_decay: 0.02     # Higher L2 regularization
+  warmup_ratio: 0.2      # INTENSIVE: 20% warmup steps for very stable training
+  warmup_steps: 0        # Alternative to warmup_ratio (set to 0 to use ratio)
+  gradient_accumulation_steps: 4  # INTENSIVE: Effective batch = 16 * 4 = 64
+  max_grad_norm: 1.0     # Gradient clipping
+  
+  # Optimization
+  fp16: true  # INTENSIVE: Enable mixed precision for GPU
+  fp16_opt_level: "O2"  # INTENSIVE: More aggressive mixed precision
+  optim: "adamw_torch"  # Optimizer: adamw_torch, adamw_hf, adafactor
+  adam_beta1: 0.9       # Adam beta1 parameter
+  adam_beta2: 0.999     # Adam beta2 parameter
+  adam_epsilon: 1.0e-8  # Adam epsilon parameter
+  
+  # DataLoader settings
+  dataloader_num_workers: 0  # WINDOWS FIX: Set to 0 to avoid multiprocessing hangs (use 4 on Linux/Mac)
+  dataloader_pin_memory: true  # Speeds up CPU-to-GPU transfer
+  dataloader_drop_last: false  # Keep all samples
+  dataloader_prefetch_factor: 2  # Prefetch batches
+  
+  # Early stopping - VERY PATIENT
+  early_stopping:
+    enabled: true  # CRITICAL: Enable early stopping
+    patience: 8    # INTENSIVE: Very patient - wait 8 cycles before stopping
+    metric: "eval_f1_macro"  # Primary metric to monitor
+    mode: "max"    # "max" for metrics to maximize, "min" for loss
+    min_delta: 0.0005  # INTENSIVE: Smaller delta for fine-grained improvements
+    restore_best_weights: true  # Restore best model weights after training
+  
+  # Learning rate scheduler - ADVANCED
+  # Options: linear, cosine, cosine_with_restarts, polynomial, constant, constant_with_warmup
+  lr_scheduler:
+    type: "cosine_with_restarts"  # INTENSIVE: Cosine with multiple restarts
+    num_cycles: 5  # INTENSIVE: More restart cycles for exploration
+  
+  # Logging and checkpointing - VERY DETAILED
+  logging_steps: 10      # INTENSIVE: Very frequent logging
+  eval_steps: 50         # INTENSIVE: Frequent evaluation
+  save_steps: 50         # INTENSIVE: Frequent checkpointing
+  save_total_limit: 10   # INTENSIVE: Keep 10 best checkpoints
+  load_best_model_at_end: true  # Load best model at end of training
+  metric_for_best_model: "f1_macro"  # Metric to determine best model
+  greater_is_better: true  # True for accuracy/F1, False for loss
+  
+  # Additional training strategies
+  label_smoothing_factor: 0.1  # Label smoothing for better generalization
+  
+# Data paths
+data:
+  train_path: "data/processed/train.csv"
+  val_path: "data/processed/val.csv"
+  test_path: "data/processed/test.csv"
+
+# Model save paths
+model_save_dir: "models/transformer/distilbert_fullscale"
+
+# Reproducibility
+seed: 42
+
+# Evaluation settings
+evaluation:
+  metrics:
+    - "accuracy"
+    - "f1_macro"
+    - "f1_weighted"
+    - "precision_macro"
+    - "recall_macro"
+  save_confusion_matrix: true
+  save_classification_report: true
+  compute_roc_auc: true  # For binary classification or OvR
+
+# Device settings
+device: "cuda"  # Options: "cuda", "cpu", "mps" (for Mac M1/M2)
+
+# Training notes
+notes: |
+  INTENSIVE FULL-SCALE TRAINING CONFIGURATION
+  
+  Key Features:
+  - Maximum sequence length (512 tokens) for full context
+  - 25 epochs with patient early stopping (patience=8)
+  - Cosine LR schedule with 5 restart cycles
+  - Higher dropout (0.15) for better regularization
+  - Mixed precision (FP16 O2) for faster GPU training
+  - Gradient accumulation (4 steps) for effective batch size of 64
+  - Very frequent evaluation and checkpointing (every 50 steps)
+  - Keep 10 best checkpoints for model selection
+  - Label smoothing (0.1) for better generalization
+  
+  Expected Performance:
+  - Accuracy: 92-95% (target)
+  - F1 Score: 0.90-0.93 (target)
+  - Training Time: 2-4 hours (GPU), 10-20 hours (CPU)
+  
+  Recommended Hardware:
+  - GPU: NVIDIA RTX 3060+ (12GB+ VRAM) or cloud GPU (T4, V100, A100)
+  - CPU: 8+ cores for data loading
+  - RAM: 16GB+ system memory
+  
+  Usage:
+  python -m src.models.transformer_training --config config/config_transformer_fullscale.yaml --mode local --fp16
