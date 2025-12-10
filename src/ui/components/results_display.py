@@ -40,6 +40,9 @@ def render_toxicity_results(result: Dict[str, Any], key_suffix: str = None) -> N
     toxicity_scores = result.get('toxicity_scores', [])
     flagged_categories = result.get('flagged_categories', [])
     
+    # Escape flagged categories for HTML display
+    escaped_categories = ', '.join([html.escape(str(cat)) for cat in flagged_categories])
+    
     # Overall status
     if is_toxic:
         st.markdown(
@@ -55,7 +58,7 @@ def render_toxicity_results(result: Dict[str, Any], key_suffix: str = None) -> N
                     🚨 Toxic Content Detected
                 </h3>
                 <p style='margin: 5px 0 0 0; font-size: 16px;'>
-                    <strong>Flagged categories:</strong> {', '.join(flagged_categories)}
+                    <strong>Flagged categories:</strong> {escaped_categories}
                 </p>
             </div>
             """,
@@ -147,6 +150,9 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     color = get_sentiment_color(label)
     emoji = get_sentiment_emoji(label)
     
+    # Escape label to prevent HTML injection
+    escaped_label = html.escape(str(label))
+    
     # Main result container
     with st.container():
         # Sentiment badge
@@ -160,7 +166,7 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                 margin: 10px 0;
             '>
                 <h3 style='margin: 0; color: {color};'>
-                    {emoji} {label}
+                    {emoji} {escaped_label}
                 </h3>
                 <p style='margin: 5px 0 0 0; font-size: 18px;'>
                     <strong>Confidence:</strong> {format_confidence(confidence)}
