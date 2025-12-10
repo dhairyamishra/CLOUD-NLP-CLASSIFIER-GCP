@@ -6,11 +6,14 @@ This directory contains the datasets used for training and evaluation.
 
 ```
 data/
-├── raw/              # Original, unprocessed datasets
+├── hate_speech/      # Hate speech dataset
 │   └── dataset.csv   # Raw hate speech dataset
-├── processed/        # Preprocessed and split datasets
+├── processed/        # Preprocessed and split datasets (hate speech)
 │   ├── train.csv     # Training set (80% of data)
 │   ├── val.csv       # Validation set (10% of data)
+│   └── test.csv      # Test set (10% of data)
+├── toxicity/         # Toxicity classification dataset (Jigsaw)
+│   ├── train.csv     # Training set (90% of data)
 │   └── test.csv      # Test set (10% of data)
 └── README.md         # This file
 ```
@@ -65,27 +68,32 @@ After preprocessing, the datasets maintain the same schema but with:
 
 ## Usage
 
-### Download Dataset
+### Download Datasets
 
-Run the download script to fetch the hate speech dataset:
+Run the download script to fetch datasets:
 
 ```bash
+# Download hate speech dataset only (default)
 python scripts/download_dataset.py
+
+# Download toxicity dataset only
+python scripts/download_dataset.py --dataset toxicity
+
+# Download both datasets
+python scripts/download_dataset.py --dataset both
 ```
 
 ### Preprocess Dataset
 
-After downloading, preprocess the data:
-
+**For Hate Speech Dataset:**
 ```bash
 python -m src.data.preprocess
-```
-
-Or use the shell script:
-
-```bash
+# Or use the shell script:
 bash scripts/run_preprocess_local.sh
 ```
+
+**For Toxicity Dataset:**
+No preprocessing needed - the download script creates train/test splits automatically.
 
 ## Notes
 

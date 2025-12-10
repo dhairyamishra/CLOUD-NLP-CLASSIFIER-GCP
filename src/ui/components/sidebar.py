@@ -30,15 +30,24 @@ def render_sidebar(models_info: Dict[str, Dict[str, Any]]) -> str:
             st.error("⚠️ No models available. Please train models first.")
             return None
         
-        # Create model options
+        # Create model options with unique colors for each model
         model_names = list(models_info.keys())
+        
+        # Define unique color badges for each model
+        model_colors = {
+            'logreg': '🔵',      # Blue - Logistic Regression
+            'svm': '🟢',         # Green - Linear SVM
+            'distilbert': '🟣',  # Purple - DistilBERT
+            'toxicity': '🟠'     # Orange - Toxicity Classifier
+        }
         
         # Add badges to model names
         display_names = []
         for name in model_names:
             info = models_info[name]
-            badge = "🔵 ML" if info['type'] == 'baseline' else "🟣 DL"
-            display_names.append(f"{badge} {name}")
+            model_key = info['key']
+            color_badge = model_colors.get(model_key, '⚪')  # Default to white if unknown
+            display_names.append(f"{color_badge} {name}")
         
         # Model selection dropdown
         selected_display = st.selectbox(
@@ -118,8 +127,10 @@ def render_sidebar(models_info: Dict[str, Dict[str, Any]]) -> str:
             machine learning and deep learning models.
             
             **Models Available:**
-            - 🔵 Baseline ML Models
-            - 🟣 Transformer (DistilBERT)
+            - 🔵 Logistic Regression (Baseline)
+            - 🟢 Linear SVM (Baseline)
+            - 🟣 DistilBERT (Transformer)
+            - 🟠 Toxicity Classifier (Multi-label)
             
             **Project:** Cloud NLP Classifier  
             **Phase:** 13 - Streamlit UI

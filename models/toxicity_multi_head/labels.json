@@ -1,0 +1,26 @@
+{
+  "id2label": {
+    "0": "toxic",
+    "1": "severe_toxic",
+    "2": "obscene",
+    "3": "threat",
+    "4": "insult",
+    "5": "identity_hate"
+  },
+  "label2id": {
+    "toxic": 0,
+    "severe_toxic": 1,
+    "obscene": 2,
+    "threat": 3,
+    "insult": 4,
+    "identity_hate": 5
+  },
+  "classes": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ]
+}

@@ -83,7 +83,7 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main(
-    raw_data_path: str = "data/raw/dataset.csv",
+    raw_data_path: str = "data/hate_speech/dataset.csv",
     output_dir: str = "data/processed",
     test_size: float = 0.1,
     val_size: float = 0.1,
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--raw_data_path",
         type=str,
-        default="data/raw/dataset.csv",
+        default="data/hate_speech/dataset.csv",
         help="Path to raw CSV file"
     )
     parser.add_argument(

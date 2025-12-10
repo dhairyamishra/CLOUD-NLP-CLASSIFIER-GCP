@@ -234,13 +234,85 @@ class InferenceHandler:
             logger.error(f"Error in transformer prediction: {e}")
             return {'error': f"Prediction failed: {str(e)}"}
     
+    def predict_toxicity(self, text: str, threshold: float = 0.5) -> Dict[str, Any]:
+        """
+        Run inference using the toxicity model (multi-label).
+        
+        Args:
+            text: Input text to classify.
+            threshold: Threshold for flagging toxicity categories.
+        
+        Returns:
+            Dictionary with toxicity scores for all categories.
+        """
+        try:
+            # Load model
+            toxicity_data = self.model_manager.load_toxicity_model()
+            if toxicity_data is None:
+                return {'error': "Toxicity model not loaded"}
+            
+            model = toxicity_data['model']
+            tokenizer = toxicity_data['tokenizer']
+            labels = toxicity_data['labels']
+            device = toxicity_data['device']
+            
+            # Tokenize
+            inputs = tokenizer(
+                text,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=256
+            )
+            
+            # Move to device
+            inputs = {k: v.to(device) for k, v in inputs.items()}
+            
+            # Predict
+            with torch.no_grad():
+                outputs = model(**inputs)
+                logits = outputs.logits
+                
+                # Apply sigmoid for multi-label
+                probs = torch.sigmoid(logits).cpu().numpy()[0]
+            
+            # Create results
+            toxicity_scores = []
+            flagged_categories = []
+            
+            for i, label in enumerate(labels):
+                score = float(probs[i])
+                is_flagged = score > threshold
+                
+                toxicity_scores.append({
+                    'category': label,
+                    'score': score,
+                    'flagged': is_flagged
+                })
+                
+                if is_flagged:
+                    flagged_categories.append(label)
+            
+            is_toxic = len(flagged_categories) > 0
+            
+            return {
+                'is_toxic': is_toxic,
+                'toxicity_scores': toxicity_scores,
+                'flagged_categories': flagged_categories,
+                'model_type': 'toxicity'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in toxicity prediction: {e}")
+            return {'error': f"Prediction failed: {str(e)}"}
+    
     def predict(self, text: str, model_key: str) -> Dict[str, Any]:
         """
         Run inference using the specified model.
         
         Args:
             text: Input text to classify.
-            model_key: Key identifying the model (logreg, svm, or distilbert).
+            model_key: Key identifying the model (logreg, svm, distilbert, or toxicity).
         
         Returns:
             Dictionary with prediction results.
@@ -249,5 +321,7 @@ class InferenceHandler:
             return self.predict_baseline(text, model_key)
         elif model_key == 'distilbert':
             return self.predict_transformer(text)
+        elif model_key == 'toxicity':
+            return self.predict_toxicity(text)
         else:
             return {'error': f"Unknown model key: {model_key}"}

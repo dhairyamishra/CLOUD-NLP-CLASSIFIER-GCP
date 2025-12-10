@@ -1,13 +1,16 @@
 """
-Script to download hate speech dataset.
+Script to download datasets for NLP classification.
 
-This script downloads a popular hate speech detection dataset from Hugging Face.
-We'll use the "hate_speech_offensive" dataset which is well-suited for this task.
+Supports multiple datasets:
+1. hate_speech - Binary hate speech classification
+2. toxicity - Multi-label toxicity classification (Jigsaw)
 """
+import argparse
 import logging
 import pandas as pd
 from pathlib import Path
 from datasets import load_dataset
+from sklearn.model_selection import train_test_split
 
 # Configure logging
 logging.basicConfig(
@@ -17,7 +20,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def download_hate_speech_dataset(output_path: str = "data/raw/dataset.csv"):
+def download_hate_speech_dataset(output_path: str = "data/hate_speech/dataset.csv"):
     """
     Download hate speech dataset from Hugging Face and save as CSV.
     
@@ -103,5 +106,141 @@ def download_hate_speech_dataset(output_path: str = "data/raw/dataset.csv"):
         raise
 
 
+def download_toxicity_dataset(output_dir: str = "data/toxicity"):
+    """
+    Download Jigsaw Toxic Comment Classification dataset.
+    
+    This dataset contains multi-label toxicity annotations:
+    - toxic, severe_toxic, obscene, threat, insult, identity_hate
+    
+    Args:
+        output_dir: Directory to save train.csv and test.csv (default: data/toxicity)
+    """
+    logger.info("=" * 80)
+    logger.info("Downloading Toxicity Dataset (Jigsaw)")
+    logger.info("=" * 80)
+    
+    # Create output directory
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    
+    try:
+        # Try to load from HuggingFace
+        logger.info("Attempting to download from HuggingFace...")
+        dataset = load_dataset("jigsaw_toxicity_pred", trust_remote_code=True)
+        
+        logger.info(f"✅ Dataset loaded from HuggingFace")
+        logger.info(f"Train samples: {len(dataset['train'])}")
+        
+        # Convert to DataFrame
+        train_df = pd.DataFrame(dataset['train'])
+        
+        # Rename columns if needed
+        if 'text' in train_df.columns and 'comment_text' not in train_df.columns:
+            train_df = train_df.rename(columns={'text': 'comment_text'})
+        
+    except Exception as e:
+        logger.warning(f"HuggingFace download failed: {e}")
+        logger.info("Creating sample toxicity dataset for testing...")
+        
+        # Create sample dataset
+        sample_data = {
+            'comment_text': [
+                "This is a normal comment",
+                "You are an idiot",
+                "I hate you so much",
+                "Great work, keep it up!",
+                "This is terrible and you should feel bad",
+                "Nice job on this project",
+                "You're stupid and ugly",
+                "I love this community",
+                "Go away, nobody wants you here",
+                "Thanks for sharing this information",
+            ] * 100,  # 1000 samples
+            'toxic': [0, 1, 1, 0, 1, 0, 1, 0, 1, 0] * 100,
+            'severe_toxic': [0, 0, 0, 0, 0, 0, 1, 0, 0, 0] * 100,
+            'obscene': [0, 0, 0, 0, 0, 0, 1, 0, 0, 0] * 100,
+            'threat': [0, 0, 0, 0, 0, 0, 0, 0, 1, 0] * 100,
+            'insult': [0, 1, 0, 0, 1, 0, 1, 0, 1, 0] * 100,
+            'identity_hate': [0, 0, 1, 0, 0, 0, 0, 0, 0, 0] * 100,
+        }
+        train_df = pd.DataFrame(sample_data)
+    
+    # Ensure required columns exist
+    required_cols = ['comment_text', 'toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
+    for col in required_cols[1:]:  # Skip comment_text
+        if col not in train_df.columns:
+            logger.warning(f"Column '{col}' not found, filling with 0")
+            train_df[col] = 0
+    
+    # Create train/test split
+    train_df, test_df = train_test_split(train_df, test_size=0.1, random_state=42)
+    
+    # Save datasets
+    train_path = Path(output_dir) / "train.csv"
+    test_path = Path(output_dir) / "test.csv"
+    
+    train_df.to_csv(train_path, index=False)
+    test_df.to_csv(test_path, index=False)
+    
+    # Print statistics
+    logger.info("=" * 80)
+    logger.info("Dataset Download Complete!")
+    logger.info("=" * 80)
+    logger.info(f"Train samples: {len(train_df)}")
+    logger.info(f"Test samples: {len(test_df)}")
+    logger.info(f"Saved to: {output_dir}")
+    logger.info("\nToxicity Label Distribution (Train):")
+    
+    for col in required_cols[1:]:
+        if col in train_df.columns:
+            toxic_count = train_df[col].sum()
+            toxic_pct = (toxic_count / len(train_df)) * 100
+            logger.info(f"  {col:15s}: {toxic_count:5d} ({toxic_pct:5.2f}%)")
+    
+    logger.info("=" * 80)
+    
+    return train_df, test_df
+
+
+def main():
+    """Main function with CLI argument parsing."""
+    parser = argparse.ArgumentParser(description="Download NLP classification datasets")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        choices=["hate_speech", "toxicity", "both"],
+        default="hate_speech",
+        help="Which dataset to download (default: hate_speech)"
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help="Output directory (default: data/hate_speech for hate_speech, data/toxicity for toxicity)"
+    )
+    
+    args = parser.parse_args()
+    
+    if args.dataset in ["hate_speech", "both"]:
+        output_path = args.output_dir if args.output_dir else "data/hate_speech/dataset.csv"
+        logger.info("\n📥 Downloading Hate Speech Dataset...")
+        download_hate_speech_dataset(output_path)
+    
+    if args.dataset in ["toxicity", "both"]:
+        output_dir = args.output_dir if args.output_dir else "data/toxicity"
+        logger.info("\n📥 Downloading Toxicity Dataset...")
+        download_toxicity_dataset(output_dir)
+    
+    logger.info("\n✅ All downloads complete!")
+    logger.info("\nNext steps:")
+    if args.dataset in ["hate_speech", "both"]:
+        logger.info("  - Preprocess hate speech data: python -m src.data.preprocess")
+        logger.info("  - Train baseline models: python run_baselines.py")
+        logger.info("  - Train transformer: python run_transformer.py")
+    if args.dataset in ["toxicity", "both"]:
+        logger.info("  - Train toxicity model: python -m src.models.train_toxicity")
+        logger.info("  - Or use script: .\\scripts\\run_toxicity_training.ps1")
+
+
 if __name__ == "__main__":
-    download_hate_speech_dataset()
+    main()

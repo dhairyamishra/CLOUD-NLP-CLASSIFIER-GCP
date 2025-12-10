@@ -4,6 +4,7 @@
 # This Dockerfile creates a production-ready container for the text 
 # classification API with multiple models:
 # - DistilBERT transformer model (best accuracy)
+# - Toxicity Classifier multi-label model (6 toxicity categories)
 # - Logistic Regression with TF-IDF (fast, interpretable)
 # - Linear SVM with TF-IDF (fast, robust)
 #
@@ -53,6 +54,9 @@ COPY config/ ./config/
 # Copy all trained models
 # Transformer model: DistilBERT (model.safetensors, config.json, tokenizer files, labels.json)
 COPY models/transformer/distilbert/ ./models/transformer/distilbert/
+
+# Toxicity classifier: Multi-label DistilBERT (model.safetensors, config.json, tokenizer files, labels.json)
+COPY models/toxicity_multi_head/ ./models/toxicity_multi_head/
 
 # Baseline models: Logistic Regression and Linear SVM (sklearn pipelines)
 COPY models/baselines/*.joblib ./models/baselines/
