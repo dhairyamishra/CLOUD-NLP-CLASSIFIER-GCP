@@ -193,21 +193,28 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
             st.markdown("### 📊 Probability Scores")
             
             # Convert to dict format if needed (API returns various formats)
+            prob_dict = {}
+            
             if isinstance(probabilities, list):
                 # List format: [score1, score2, ...]
                 prob_dict = {f"Class {i}": score for i, score in enumerate(probabilities)}
             elif isinstance(probabilities, dict):
                 # Check if it's a nested dict (toxicity model format)
                 # Example: {'toxic': {'score': 0.5}, 'severe_toxic': {'score': 0.1}}
-                first_value = next(iter(probabilities.values()), None)
-                if isinstance(first_value, dict) and 'score' in first_value:
-                    # Flatten nested dict
-                    prob_dict = {k: v['score'] for k, v in probabilities.items()}
-                else:
-                    # Already flat dict
-                    prob_dict = probabilities
-            else:
-                prob_dict = {}
+                for key, value in probabilities.items():
+                    if isinstance(value, dict):
+                        # Nested dict - extract score
+                        if 'score' in value:
+                            prob_dict[key] = value['score']
+                        else:
+                            # Try to get any numeric value
+                            prob_dict[key] = next((v for v in value.values() if isinstance(v, (int, float))), 0.0)
+                    elif isinstance(value, (int, float)):
+                        # Already a number
+                        prob_dict[key] = value
+                    else:
+                        # Unknown format, skip
+                        continue
             
             # Define consistent label order (don't sort by value)
             # This ensures consistent axis ordering regardless of probabilities
