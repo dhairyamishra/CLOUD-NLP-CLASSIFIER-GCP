@@ -145,10 +145,11 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     inference_time = result.get('inference_time_ms', 0.0)
     probabilities = result.get('probabilities', {})
     model_type = result.get('model_type', 'unknown')
-    model_name = result.get('model', 'unknown')
+    # Check both 'model' and 'model_name' fields (API uses 'model_name')
+    model_name = result.get('model', result.get('model_name', 'unknown'))
     
     # Map numeric labels to meaningful names (only for DistilBERT model)
-    if 'distilbert' in model_name.lower():
+    if 'distilbert' in str(model_name).lower():
         if label == '0' or label == 0:
             label = 'Regular Speech'
         elif label == '1' or label == 1:
@@ -211,7 +212,7 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                         if 'label' in item and 'score' in item:
                             # Map numeric labels to meaningful names (only for DistilBERT)
                             label_val = item['label']
-                            if 'distilbert' in model_name.lower():
+                            if 'distilbert' in str(model_name).lower():
                                 if label_val == '0' or label_val == 0:
                                     label_val = 'Regular Speech'
                                 elif label_val == '1' or label_val == 1:
