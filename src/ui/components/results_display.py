@@ -180,6 +180,27 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     # Check both 'model' and 'model_name' fields (API uses 'model_name')
     model_name = result.get('model', result.get('model_name', 'unknown'))
     
+    # Show model badge at the top (right below chat message)
+    model_badge_color = "#0066CC" if model_type == 'baseline' else "#9C27B0"
+    model_badge_text = "ML Model" if model_type == 'baseline' else "DL Model"
+    
+    st.markdown(
+        f"""
+        <div style='text-align: left; margin: 5px 0 10px 0;'>
+            <span style='
+                background-color: {model_badge_color};
+                color: white;
+                padding: 3px 10px;
+                border-radius: 12px;
+                font-size: 12px;
+            '>
+                {model_badge_text}
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
     # Map numeric labels to meaningful names (only for DistilBERT model)
     if 'distilbert' in str(model_name).lower():
         if label == '0' or label == 0:
@@ -352,27 +373,6 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
             col1, col2 = st.columns([0.7, 0.3])
             with col1:
                 st.plotly_chart(fig, use_container_width=True, key=f"chart_{key_suffix}")
-        
-        # Model info badge
-        model_badge_color = "#0066CC" if model_type == 'baseline' else "#9C27B0"
-        model_badge_text = "ML Model" if model_type == 'baseline' else "DL Model"
-        
-        st.markdown(
-            f"""
-            <div style='text-align: right; margin-top: 10px;'>
-                <span style='
-                    background-color: {model_badge_color};
-                    color: white;
-                    padding: 3px 10px;
-                    border-radius: 12px;
-                    font-size: 12px;
-                '>
-                    {model_badge_text}
-                </span>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
 
 
 def render_message_bubble(role: str, content: Any, timestamp: str = None) -> None:
