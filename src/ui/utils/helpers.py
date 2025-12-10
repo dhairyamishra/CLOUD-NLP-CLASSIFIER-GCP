@@ -51,8 +51,8 @@ def get_sentiment_color(label) -> str:
     label_str = str(label).lower()
     
     # Check for non-toxic/non-hate/positive indicators FIRST
-    # This is important because "non-hate" contains "hate"
-    if any(word in label_str for word in ['non-hate', 'non_hate', 'positive', 'neutral', 'identity_hate']):
+    # This is important because "non-hate" contains "hate" and "non-toxic" contains "toxic"
+    if any(word in label_str for word in ['non-toxic', 'non_toxic', 'non-hate', 'non_hate', 'regular', 'positive', 'neutral', 'identity_hate']):
         return "#28A745"  # Green
     # Check for toxic/hate/negative indicators
     elif any(word in label_str for word in ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'hate', 'negative']):
@@ -80,7 +80,7 @@ def get_sentiment_emoji(label) -> str:
     label_str = str(label).lower()
     
     # Check for non-toxic/non-hate/positive indicators FIRST
-    if any(word in label_str for word in ['non-hate', 'non_hate', 'positive', 'identity_hate']):
+    if any(word in label_str for word in ['non-toxic', 'non_toxic', 'non-hate', 'non_hate', 'regular', 'positive', 'identity_hate']):
         return "✅"
     elif 'neutral' in label_str:
         return "➖"
