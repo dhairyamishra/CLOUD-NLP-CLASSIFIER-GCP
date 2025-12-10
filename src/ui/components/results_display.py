@@ -180,9 +180,17 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     # Check both 'model' and 'model_name' fields (API uses 'model_name')
     model_name = result.get('model', result.get('model_name', 'unknown'))
     
-    # Show model badge at the top (right below chat message)
-    model_badge_color = "#0066CC" if model_type == 'baseline' else "#9C27B0"
-    model_badge_text = "ML Model" if model_type == 'baseline' else "DL Model"
+    # Determine model badge based on current selected model (from session state) or result
+    # This ensures badge updates when model is switched
+    current_model = st.session_state.get('selected_model', model_name)
+    
+    # Determine if it's a baseline model (ML) or deep learning model (DL)
+    is_baseline = ('logistic' in str(current_model).lower() or 
+                   'svm' in str(current_model).lower() or 
+                   model_type == 'baseline')
+    
+    model_badge_color = "#0066CC" if is_baseline else "#9C27B0"
+    model_badge_text = "ML Model" if is_baseline else "DL Model"
     
     st.markdown(
         f"""
