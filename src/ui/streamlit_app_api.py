@@ -166,13 +166,15 @@ def render_api_sidebar(api_handler, models_data: Dict[str, Any]):
         for model in available_models:
             if isinstance(model, dict):
                 if model.get('name') == selected_model:
-                    with st.expander("📊 Model Details", expanded=False):
-                        st.markdown(f"**Type:** {model.get('type', 'N/A')}")
-                        st.markdown(f"**Status:** {model.get('status', 'N/A')}")
+                    st.markdown("#### 📊 Model Details")
+                    with st.container():
+                        st.markdown(f"**Model:** {selected_model}")
+                        st.markdown(f"**Status:** {model.get('status', 'Active')}")
                     break
             elif model == selected_model:
                 # Simple string model name - show basic info
-                with st.expander("📊 Model Details", expanded=False):
+                st.markdown("#### 📊 Model Details")
+                with st.container():
                     st.markdown(f"**Model:** {selected_model}")
                     st.markdown(f"**Status:** Active")
                 break
