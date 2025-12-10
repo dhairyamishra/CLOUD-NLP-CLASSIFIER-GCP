@@ -305,7 +305,11 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                 return
             
             # Color bars based on sentiment or gradient for toxicity
-            if model_type == 'toxicity':
+            # Check both model_type and model_name for toxicity
+            is_toxicity = (model_type == 'toxicity' or 
+                          'toxicity' in str(model_name).lower())
+            
+            if is_toxicity:
                 # Use gradient coloring for toxicity model (green to red based on percentage)
                 colors_list = [get_toxicity_gradient_color(value) for value in values_list]
             else:
