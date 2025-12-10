@@ -196,8 +196,15 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
             prob_dict = {}
             
             if isinstance(probabilities, list):
-                # List format: [score1, score2, ...]
-                prob_dict = {f"Class {i}": score for i, score in enumerate(probabilities)}
+                # Check if it's a list of dicts (API format: [{"label": "...", "score": 0.5}, ...])
+                if probabilities and isinstance(probabilities[0], dict):
+                    # Extract label-score pairs from list of dicts
+                    for item in probabilities:
+                        if 'label' in item and 'score' in item:
+                            prob_dict[item['label']] = item['score']
+                else:
+                    # List of numbers: [score1, score2, ...]
+                    prob_dict = {f"Class {i}": score for i, score in enumerate(probabilities)}
             elif isinstance(probabilities, dict):
                 # Check if it's a nested dict (toxicity model format)
                 # Example: {'toxic': {'score': 0.5}, 'severe_toxic': {'score': 0.1}}
