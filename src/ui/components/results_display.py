@@ -16,6 +16,29 @@ from src.ui.utils.helpers import (
 )
 
 
+def get_toxicity_gradient_color(percentage: float) -> str:
+    """
+    Get gradient color from green to red based on percentage (0-100).
+    
+    Args:
+        percentage: Value from 0 to 100
+    
+    Returns:
+        Hex color string
+    """
+    # Clamp percentage to 0-100
+    percentage = max(0, min(100, percentage))
+    
+    # Calculate RGB values
+    # Green (0, 255, 0) at 0% -> Red (255, 0, 0) at 100%
+    red = int(255 * (percentage / 100))
+    green = int(255 * (1 - percentage / 100))
+    blue = 0
+    
+    # Convert to hex
+    return f"#{red:02x}{green:02x}{blue:02x}"
+
+
 def render_toxicity_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     """
     Render toxicity prediction results (multi-label).
@@ -281,8 +304,13 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                 st.warning("Could not parse probability scores")
                 return
             
-            # Color bars based on sentiment
-            colors_list = [get_sentiment_color(label) for label in labels_list]
+            # Color bars based on sentiment or gradient for toxicity
+            if model_type == 'toxicity':
+                # Use gradient coloring for toxicity model (green to red based on percentage)
+                colors_list = [get_toxicity_gradient_color(value) for value in values_list]
+            else:
+                # Use sentiment-based coloring for other models
+                colors_list = [get_sentiment_color(label) for label in labels_list]
             
             fig = go.Figure(data=[
                 go.Bar(
