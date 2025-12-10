@@ -7,6 +7,7 @@ Formats and displays prediction results.
 import streamlit as st
 from typing import Dict, Any
 import plotly.graph_objects as go
+import html
 from src.ui.utils.helpers import (
     format_confidence,
     get_sentiment_color,
@@ -257,6 +258,10 @@ def render_message_bubble(role: str, content: Any, timestamp: str = None) -> Non
     """
     if role == 'user':
         # User message (right-aligned, blue)
+        # Escape HTML to prevent rendering issues
+        escaped_content = html.escape(content)
+        timestamp_html = f"<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{html.escape(timestamp)}</div>" if timestamp else ""
+        
         st.markdown(
             f"""
             <div style='
@@ -272,15 +277,17 @@ def render_message_bubble(role: str, content: Any, timestamp: str = None) -> Non
                     max-width: 70%;
                     text-align: left;
                 '>
-                    {content}
+                    {escaped_content}
                 </div>
-                {f"<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{timestamp}</div>" if timestamp else ""}
+                {timestamp_html}
             </div>
             """,
             unsafe_allow_html=True
         )
     else:
         # Assistant message (left-aligned, gray)
+        timestamp_html = f"<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{html.escape(timestamp)}</div>" if timestamp else ""
+        
         st.markdown(
             f"""
             <div style='
@@ -298,7 +305,7 @@ def render_message_bubble(role: str, content: Any, timestamp: str = None) -> Non
                 '>
                     🤖 <strong>Analysis Result</strong>
                 </div>
-                {f"<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{timestamp}</div>" if timestamp else ""}
+                {timestamp_html}
             </div>
             """,
             unsafe_allow_html=True
