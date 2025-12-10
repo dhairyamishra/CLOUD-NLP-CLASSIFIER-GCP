@@ -277,61 +277,23 @@ def render_message_bubble(role: str, content: Any, timestamp: str = None) -> Non
         # User message (right-aligned, blue)
         # Escape HTML to prevent rendering issues
         escaped_content = html.escape(content)
-        escaped_timestamp = html.escape(timestamp) if timestamp else ""
         
-        # Build the complete HTML string at once
-        html_content = f"""
-            <div style='
-                text-align: right;
-                margin: 10px 0;
-            '>
-                <div style='
-                    display: inline-block;
-                    background-color: #0066CC;
-                    color: white;
-                    padding: 10px 15px;
-                    border-radius: 15px 15px 0 15px;
-                    max-width: 70%;
-                    text-align: left;
-                '>
-                    {escaped_content}
-                </div>
-        """
-        
-        # Add timestamp if present
+        # Build the complete HTML string conditionally (single line to avoid Streamlit parsing issues)
         if timestamp:
-            html_content += f"""<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{escaped_timestamp}</div>"""
-        
-        html_content += """</div>"""
+            escaped_timestamp = html.escape(timestamp)
+            html_content = f"<div style='text-align: right; margin: 10px 0;'><div style='display: inline-block; background-color: #0066CC; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 70%; text-align: left;'>{escaped_content}</div><div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{escaped_timestamp}</div></div>"
+        else:
+            html_content = f"<div style='text-align: right; margin: 10px 0;'><div style='display: inline-block; background-color: #0066CC; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 70%; text-align: left;'>{escaped_content}</div></div>"
         
         st.markdown(html_content, unsafe_allow_html=True)
     else:
         # Assistant message (left-aligned, gray)
-        escaped_timestamp = html.escape(timestamp) if timestamp else ""
         
-        # Build the complete HTML string at once
-        html_content = f"""
-            <div style='
-                text-align: left;
-                margin: 10px 0;
-            '>
-                <div style='
-                    display: inline-block;
-                    background-color: #F0F2F6;
-                    color: #262730;
-                    padding: 10px 15px;
-                    border-radius: 15px 15px 15px 0;
-                    max-width: 70%;
-                    text-align: left;
-                '>
-                    🤖 <strong>Analysis Result</strong>
-                </div>
-        """
-        
-        # Add timestamp if present
+        # Build the complete HTML string conditionally (single line to avoid Streamlit parsing issues)
         if timestamp:
-            html_content += f"""<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{escaped_timestamp}</div>"""
-        
-        html_content += """</div>"""
+            escaped_timestamp = html.escape(timestamp)
+            html_content = f"<div style='text-align: left; margin: 10px 0;'><div style='display: inline-block; background-color: #F0F2F6; color: #262730; padding: 10px 15px; border-radius: 15px 15px 15px 0; max-width: 70%; text-align: left;'>🤖 <strong>Analysis Result</strong></div><div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{escaped_timestamp}</div></div>"
+        else:
+            html_content = f"<div style='text-align: left; margin: 10px 0;'><div style='display: inline-block; background-color: #F0F2F6; color: #262730; padding: 10px 15px; border-radius: 15px 15px 15px 0; max-width: 70%; text-align: left;'>🤖 <strong>Analysis Result</strong></div></div>"
         
         st.markdown(html_content, unsafe_allow_html=True)
