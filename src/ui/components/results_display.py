@@ -186,11 +186,22 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
         if show_probabilities and probabilities:
             st.markdown("### 📊 Probability Scores")
             
-            # Sort probabilities by value (descending)
+            # Define consistent label order (don't sort by value)
+            # This ensures consistent axis ordering regardless of probabilities
+            label_order = {
+                'Hate Speech': 0,
+                'Non-Hate Speech': 1,
+                'hate_speech': 0,
+                'non_hate_speech': 1,
+                'positive': 0,
+                'negative': 1,
+                'neutral': 2
+            }
+            
+            # Sort by predefined order, fallback to alphabetical
             sorted_probs = sorted(
                 probabilities.items(),
-                key=lambda x: x[1],
-                reverse=True
+                key=lambda x: label_order.get(x[0], ord(x[0][0]))
             )
             
             # Create horizontal bar chart
@@ -260,10 +271,10 @@ def render_message_bubble(role: str, content: Any, timestamp: str = None) -> Non
         # User message (right-aligned, blue)
         # Escape HTML to prevent rendering issues
         escaped_content = html.escape(content)
-        timestamp_html = f"<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{html.escape(timestamp)}</div>" if timestamp else ""
+        escaped_timestamp = html.escape(timestamp) if timestamp else ""
         
-        st.markdown(
-            f"""
+        # Build the complete HTML string at once
+        html_content = f"""
             <div style='
                 text-align: right;
                 margin: 10px 0;
@@ -279,17 +290,21 @@ def render_message_bubble(role: str, content: Any, timestamp: str = None) -> Non
                 '>
                     {escaped_content}
                 </div>
-                {timestamp_html}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        """
+        
+        # Add timestamp if present
+        if timestamp:
+            html_content += f"""<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{escaped_timestamp}</div>"""
+        
+        html_content += """</div>"""
+        
+        st.markdown(html_content, unsafe_allow_html=True)
     else:
         # Assistant message (left-aligned, gray)
-        timestamp_html = f"<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{html.escape(timestamp)}</div>" if timestamp else ""
+        escaped_timestamp = html.escape(timestamp) if timestamp else ""
         
-        st.markdown(
-            f"""
+        # Build the complete HTML string at once
+        html_content = f"""
             <div style='
                 text-align: left;
                 margin: 10px 0;
@@ -305,8 +320,12 @@ def render_message_bubble(role: str, content: Any, timestamp: str = None) -> Non
                 '>
                     🤖 <strong>Analysis Result</strong>
                 </div>
-                {timestamp_html}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        """
+        
+        # Add timestamp if present
+        if timestamp:
+            html_content += f"""<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{escaped_timestamp}</div>"""
+        
+        html_content += """</div>"""
+        
+        st.markdown(html_content, unsafe_allow_html=True)

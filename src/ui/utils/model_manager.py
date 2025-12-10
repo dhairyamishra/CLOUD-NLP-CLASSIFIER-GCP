@@ -229,7 +229,8 @@ class ModelManager:
             return result
         
         except Exception as e:
-            logger.error(f"❌ Error loading toxicity model: {e}")
+            logger.warning(f"⚠️ Toxicity model not available: {str(e)[:100]}")
+            logger.info("Continuing without toxicity model - other models will still work")
             return None
     
     def get_available_models(self) -> Dict[str, Dict[str, Any]]:

@@ -199,3 +199,45 @@ The bug has been successfully fixed by implementing proper HTML escaping for use
 **Status:** ✅ Production Ready  
 **Testing:** ✅ Verified  
 **Documentation:** ✅ Complete
+
+---
+
+## Update: Second Fix (2025-12-10)
+
+### Issue with First Fix
+The initial fix still had a bug where the timestamp HTML was being built as a separate string and then inserted into the main HTML f-string. This caused Streamlit to escape the timestamp HTML, showing it as literal text instead of rendering it.
+
+### Root Cause
+```python
+# Problem: Building HTML in parts
+timestamp_html = f"<div>...</div>" if timestamp else ""
+st.markdown(f"<div>...{timestamp_html}</div>", unsafe_allow_html=True)
+# The {timestamp_html} gets escaped when inserted into the f-string
+```
+
+### Final Solution
+Build the entire HTML string progressively using string concatenation:
+
+```python
+# Solution: Build HTML progressively
+html_content = f"""<div>...</div>"""
+if timestamp:
+    html_content += f"""<div>{escaped_timestamp}</div>"""
+html_content += """</div>"""
+st.markdown(html_content, unsafe_allow_html=True)
+```
+
+### Changes Made
+**Lines 270-301 (User message):**
+- Escape timestamp first: `escaped_timestamp = html.escape(timestamp) if timestamp else ""`
+- Build base HTML in `html_content` variable
+- Conditionally append timestamp HTML if present
+- Close outer div
+- Pass complete HTML to `st.markdown()`
+
+**Lines 302-331 (Assistant message):**
+- Same approach for consistency
+
+**Status:** ✅ FULLY FIXED  
+**Testing:** ✅ Re-verified  
+**Production Ready:** ✅ Yes
