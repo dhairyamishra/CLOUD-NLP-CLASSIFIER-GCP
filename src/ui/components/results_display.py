@@ -192,6 +192,14 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
         if show_probabilities and probabilities:
             st.markdown("### 📊 Probability Scores")
             
+            # Convert list to dict if needed (API returns list format)
+            if isinstance(probabilities, list):
+                # Assume list format: [score1, score2, ...]
+                # Create generic labels
+                prob_dict = {f"Class {i}": score for i, score in enumerate(probabilities)}
+            else:
+                prob_dict = probabilities
+            
             # Define consistent label order (don't sort by value)
             # This ensures consistent axis ordering regardless of probabilities
             label_order = {
@@ -206,7 +214,7 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
             
             # Sort by predefined order, fallback to alphabetical
             sorted_probs = sorted(
-                probabilities.items(),
+                prob_dict.items(),
                 key=lambda x: label_order.get(x[0], ord(x[0][0]))
             )
             
