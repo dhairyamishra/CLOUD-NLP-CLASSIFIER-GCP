@@ -228,15 +228,35 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                 'neutral': 2
             }
             
+            # Skip if prob_dict is empty or invalid
+            if not prob_dict:
+                st.warning("No probability data available")
+                return
+            
             # Sort by predefined order, fallback to alphabetical
             sorted_probs = sorted(
                 prob_dict.items(),
                 key=lambda x: label_order.get(x[0], ord(x[0][0]))
             )
             
-            # Create horizontal bar chart
-            labels_list = [item[0] for item in sorted_probs]
-            values_list = [item[1] * 100 for item in sorted_probs]  # Convert to percentage
+            # Create horizontal bar chart with type safety
+            labels_list = []
+            values_list = []
+            
+            for label, value in sorted_probs:
+                # Ensure value is numeric
+                if isinstance(value, (int, float)):
+                    labels_list.append(label)
+                    values_list.append(value * 100)  # Convert to percentage
+                elif isinstance(value, dict):
+                    # Still nested - try to extract
+                    numeric_val = value.get('score', 0.0) if 'score' in value else 0.0
+                    labels_list.append(label)
+                    values_list.append(numeric_val * 100)
+            
+            if not values_list:
+                st.warning("Could not parse probability scores")
+                return
             
             # Color bars based on sentiment
             colors_list = [get_sentiment_color(label) for label in labels_list]
