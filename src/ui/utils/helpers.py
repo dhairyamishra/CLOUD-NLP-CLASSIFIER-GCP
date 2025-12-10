@@ -50,12 +50,13 @@ def get_sentiment_color(label) -> str:
     # Convert to string if numeric
     label_str = str(label).lower()
     
-    # Check for hate/negative indicators
-    if 'hate' in label_str or 'toxic' in label_str or 'negative' in label_str or label_str == '1':
-        return "#DC3545"  # Red
-    # Check for non-hate/positive indicators
-    elif 'non-hate' in label_str or 'positive' in label_str or 'neutral' in label_str or label_str == '0':
+    # Check for non-hate/positive indicators FIRST (before checking 'hate')
+    # This is important because "non-hate" contains "hate"
+    if 'non-hate' in label_str or 'positive' in label_str or 'neutral' in label_str or label_str == '0':
         return "#28A745"  # Green
+    # Check for hate/negative indicators
+    elif 'hate' in label_str or 'toxic' in label_str or 'negative' in label_str or label_str == '1':
+        return "#DC3545"  # Red
     else:
         return "#6C757D"  # Gray
 
@@ -73,14 +74,15 @@ def get_sentiment_emoji(label) -> str:
     # Convert to string if numeric
     label_str = str(label).lower()
     
-    # Check for hate/negative indicators
-    if 'hate' in label_str or 'toxic' in label_str or 'negative' in label_str or label_str == '1':
-        return "⚠️"
-    # Check for non-hate/positive indicators
-    elif 'non-hate' in label_str or 'positive' in label_str or label_str == '0':
+    # Check for non-hate/positive indicators FIRST (before checking 'hate')
+    # This is important because "non-hate" contains "hate"
+    if 'non-hate' in label_str or 'positive' in label_str or label_str == '0':
         return "✅"
     elif 'neutral' in label_str:
         return "➖"
+    # Check for hate/negative indicators
+    elif 'hate' in label_str or 'toxic' in label_str or 'negative' in label_str or label_str == '1':
+        return "⚠️"
     else:
         return "🤖"
 

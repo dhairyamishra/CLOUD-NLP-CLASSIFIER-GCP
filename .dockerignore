@@ -51,6 +51,7 @@ data/processed/
 *.csv
 *.json
 !models/transformer/distilbert/*.json
+!models/toxicity_multi_head/*.json
 
 # Scripts (not needed in container, except for Docker-specific ones)
 scripts/

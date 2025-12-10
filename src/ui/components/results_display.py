@@ -7,6 +7,7 @@ Formats and displays prediction results.
 import streamlit as st
 from typing import Dict, Any
 import plotly.graph_objects as go
+import html
 from src.ui.utils.helpers import (
     format_confidence,
     get_sentiment_color,
@@ -14,6 +15,102 @@ from src.ui.utils.helpers import (
     get_performance_indicator
 )
 
+
+def render_toxicity_results(result: Dict[str, Any], key_suffix: str = None) -> None:
+    """
+    Render toxicity prediction results (multi-label).
+    
+    Args:
+        result: Dictionary with toxicity prediction results.
+        key_suffix: Optional suffix for unique widget keys.
+    """
+    import time
+    
+    # Generate unique key if not provided
+    if key_suffix is None:
+        key_suffix = str(time.time()).replace('.', '_')
+    
+    # Check for errors
+    if 'error' in result:
+        st.error(f"❌ {result['error']}")
+        return
+    
+    # Extract data
+    is_toxic = result.get('is_toxic', False)
+    toxicity_scores = result.get('toxicity_scores', [])
+    flagged_categories = result.get('flagged_categories', [])
+    
+    # Escape flagged categories for HTML display
+    escaped_categories = ', '.join([html.escape(str(cat)) for cat in flagged_categories])
+    
+    # Overall status
+    if is_toxic:
+        st.markdown(
+            f"""
+            <div style='
+                background-color: #ff444420;
+                border-left: 4px solid #ff4444;
+                padding: 15px;
+                border-radius: 5px;
+                margin: 10px 0;
+            '>
+                <h3 style='margin: 0; color: #ff4444;'>
+                    🚨 Toxic Content Detected
+                </h3>
+                <p style='margin: 5px 0 0 0; font-size: 16px;'>
+                    <strong>Flagged categories:</strong> {escaped_categories}
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            f"""
+            <div style='
+                background-color: #00cc0020;
+                border-left: 4px solid #00cc00;
+                padding: 15px;
+                border-radius: 5px;
+                margin: 10px 0;
+            '>
+                <h3 style='margin: 0; color: #00cc00;'>
+                    ✅ Non-Toxic Content
+                </h3>
+                <p style='margin: 5px 0 0 0; font-size: 16px;'>
+                    No toxicity categories flagged
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    # Toxicity scores
+    st.markdown("### 📊 Toxicity Category Scores")
+    
+    for score_data in toxicity_scores:
+        category = score_data['category']
+        score = score_data['score']
+        flagged = score_data['flagged']
+        
+        # Color based on score
+        if score > 0.7:
+            color = "#ff4444"
+        elif score > 0.5:
+            color = "#ff8800"
+        elif score > 0.3:
+            color = "#ffcc00"
+        else:
+            color = "#00cc00"
+        
+        # Display with progress bar
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            flag_emoji = "⚠️" if flagged else "✅"
+            st.markdown(f"{flag_emoji} **{category.replace('_', ' ').title()}**")
+            st.progress(score)
+        with col2:
+            st.markdown(f"<div style='color: {color}; font-size: 20px; font-weight: bold; text-align: right;'>{score:.1%}</div>", unsafe_allow_html=True)
 
 def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     """
@@ -28,6 +125,11 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     # Generate unique key if not provided
     if key_suffix is None:
         key_suffix = str(time.time()).replace('.', '_')
+    
+    # Check if this is a toxicity result
+    if result.get('model_type') == 'toxicity':
+        return render_toxicity_results(result, key_suffix)
+    
     # Check for errors
     if 'error' in result:
         st.error(f"❌ {result['error']}")
@@ -48,6 +150,9 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     color = get_sentiment_color(label)
     emoji = get_sentiment_emoji(label)
     
+    # Escape label to prevent HTML injection
+    escaped_label = html.escape(str(label))
+    
     # Main result container
     with st.container():
         # Sentiment badge
@@ -61,7 +166,7 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                 margin: 10px 0;
             '>
                 <h3 style='margin: 0; color: {color};'>
-                    {emoji} {label}
+                    {emoji} {escaped_label}
                 </h3>
                 <p style='margin: 5px 0 0 0; font-size: 18px;'>
                     <strong>Confidence:</strong> {format_confidence(confidence)}
@@ -87,11 +192,22 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
         if show_probabilities and probabilities:
             st.markdown("### 📊 Probability Scores")
             
-            # Sort probabilities by value (descending)
+            # Define consistent label order (don't sort by value)
+            # This ensures consistent axis ordering regardless of probabilities
+            label_order = {
+                'Hate Speech': 0,
+                'Non-Hate Speech': 1,
+                'hate_speech': 0,
+                'non_hate_speech': 1,
+                'positive': 0,
+                'negative': 1,
+                'neutral': 2
+            }
+            
+            # Sort by predefined order, fallback to alphabetical
             sorted_probs = sorted(
                 probabilities.items(),
-                key=lambda x: x[1],
-                reverse=True
+                key=lambda x: label_order.get(x[0], ord(x[0][0]))
             )
             
             # Create horizontal bar chart
@@ -159,49 +275,25 @@ def render_message_bubble(role: str, content: Any, timestamp: str = None) -> Non
     """
     if role == 'user':
         # User message (right-aligned, blue)
-        st.markdown(
-            f"""
-            <div style='
-                text-align: right;
-                margin: 10px 0;
-            '>
-                <div style='
-                    display: inline-block;
-                    background-color: #0066CC;
-                    color: white;
-                    padding: 10px 15px;
-                    border-radius: 15px 15px 0 15px;
-                    max-width: 70%;
-                    text-align: left;
-                '>
-                    {content}
-                </div>
-                {f"<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{timestamp}</div>" if timestamp else ""}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        # Escape HTML to prevent rendering issues
+        escaped_content = html.escape(content)
+        
+        # Build the complete HTML string conditionally (single line to avoid Streamlit parsing issues)
+        if timestamp:
+            escaped_timestamp = html.escape(timestamp)
+            html_content = f"<div style='text-align: right; margin: 10px 0;'><div style='display: inline-block; background-color: #0066CC; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 70%; text-align: left;'>{escaped_content}</div><div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{escaped_timestamp}</div></div>"
+        else:
+            html_content = f"<div style='text-align: right; margin: 10px 0;'><div style='display: inline-block; background-color: #0066CC; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 70%; text-align: left;'>{escaped_content}</div></div>"
+        
+        st.markdown(html_content, unsafe_allow_html=True)
     else:
         # Assistant message (left-aligned, gray)
-        st.markdown(
-            f"""
-            <div style='
-                text-align: left;
-                margin: 10px 0;
-            '>
-                <div style='
-                    display: inline-block;
-                    background-color: #F0F2F6;
-                    color: #262730;
-                    padding: 10px 15px;
-                    border-radius: 15px 15px 15px 0;
-                    max-width: 70%;
-                    text-align: left;
-                '>
-                    🤖 <strong>Analysis Result</strong>
-                </div>
-                {f"<div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{timestamp}</div>" if timestamp else ""}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        
+        # Build the complete HTML string conditionally (single line to avoid Streamlit parsing issues)
+        if timestamp:
+            escaped_timestamp = html.escape(timestamp)
+            html_content = f"<div style='text-align: left; margin: 10px 0;'><div style='display: inline-block; background-color: #F0F2F6; color: #262730; padding: 10px 15px; border-radius: 15px 15px 15px 0; max-width: 70%; text-align: left;'>🤖 <strong>Analysis Result</strong></div><div style='font-size: 11px; color: #6C757D; margin-top: 3px;'>{escaped_timestamp}</div></div>"
+        else:
+            html_content = f"<div style='text-align: left; margin: 10px 0;'><div style='display: inline-block; background-color: #F0F2F6; color: #262730; padding: 10px 15px; border-radius: 15px 15px 15px 0; max-width: 70%; text-align: left;'>🤖 <strong>Analysis Result</strong></div></div>"
+        
+        st.markdown(html_content, unsafe_allow_html=True)

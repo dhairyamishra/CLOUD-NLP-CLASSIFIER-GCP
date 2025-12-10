@@ -44,15 +44,15 @@ services:
       start_period: 40s
     networks:
       - nlp-network
-    # Resource limits (adjust based on your needs)
+    # Resource limits (increased for toxicity model support)
     deploy:
       resources:
         limits:
           cpus: '2.0'
-          memory: 2G
+          memory: 3G
         reservations:
           cpus: '1.0'
-          memory: 1G
+          memory: 2G
 
   # Streamlit Interactive UI
   ui:
