@@ -23,9 +23,9 @@ training:
 
 # Data paths
 data:
-  train_path: "data/train.csv"
-  test_path: "data/test.csv"
-  test_labels_path: "data/test_labels.csv"
+  train_path: "data/toxicity/train.csv"
+  test_path: "data/toxicity/test.csv"
+  test_labels_path: "data/toxicity/test_labels.csv"
 
 # Model save paths
 model_save_dir: "models/toxicity_multi_head"
