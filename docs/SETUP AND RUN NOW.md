@@ -1,13 +1,14 @@
 ````markdown
-# CLOUD-NLP-CLASSIFIER-GCP – END-TO-END EXECUTION GUIDE  
-**Initialize → Train → Test → Deploy** :contentReference[oaicite:0]{index=0}  
+# CLOUD-NLP-CLASSIFIER-GCP – END-TO-END EXECUTION GUIDE
+
+**Initialize → Train → Test → Deploy** :contentReference[oaicite:0]{index=0}
 
 This document gives a **straight-line recipe** to get from a fresh machine to a **running cloud API**.
 
 - Steps are grouped into **stages**.
 - Each step has:
-  - `STEP [x]:` – what you’re doing  
-  - `Run Command:` – the exact command  
+  - `STEP [x]:` – what you’re doing
+  - `Run Command:` – the exact command
   - `Expected Result:` – what you should see
 
 > **Note:** Commands assume you are in the project root: `CLOUD-NLP-CLASSIFIER-GCP/`.
@@ -32,9 +33,11 @@ Prepare your local machine with the right tools and create an isolated Python en
 
 **STEP [0.a]: Clone the repo to your local machine**  
 **Run Command:**
+
 ```bash
 git clone https://github.com/<YOUR_USERNAME>/CLOUD-NLP-CLASSIFIER-GCP.git
 cd CLOUD-NLP-CLASSIFIER-GCP
+```
 ````
 
 **Expected Result:**
@@ -46,14 +49,14 @@ A new folder `CLOUD-NLP-CLASSIFIER-GCP/` exists, and you are inside it.
 
 **STEP [0.b]: Create & activate Python virtualenv**
 
-* **Linux / Mac – Run Command:**
+- **Linux / Mac – Run Command:**
 
   ```bash
   python -m venv venv
   source venv/bin/activate
   ```
 
-* **Windows (PowerShell) – Run Command:**
+- **Windows (PowerShell) – Run Command:**
 
   ```powershell
   python -m venv venv
@@ -86,8 +89,8 @@ Download and preprocess the hate/offensive speech dataset into train/val/test CS
 
 **Requirements before proceeding:**
 
-* Stage 0 completed
-* Network access to download dataset (if the scripts do so)
+- Stage 0 completed
+- Network access to download dataset (if the scripts do so)
 
 ---
 
@@ -109,13 +112,13 @@ mkdir -p data/raw data/processed
 
 **STEP [1.b]: Preprocess dataset into train/val/test splits**
 
-* **Linux / Mac – Run Command:**
+- **Linux / Mac – Run Command:**
 
   ```bash
   bash scripts/run_preprocess_local.sh
   ```
 
-* **Windows (PowerShell) – Run Command:**
+- **Windows (PowerShell) – Run Command:**
 
   ```powershell
   .\scripts\run_preprocess_local.ps1
@@ -123,17 +126,18 @@ mkdir -p data/raw data/processed
 
 **Expected Result:**
 
-* Script finishes without errors.
-* New CSV files appear:
+- Script finishes without errors.
+- New CSV files appear:
 
-  * `data/processed/train.csv`
-  * `data/processed/val.csv`
-  * `data/processed/test.csv`
-* Logs mention:
+  - `data/processed/train.csv`
+  - `data/processed/val.csv`
+  - `data/processed/test.csv`
 
-  * Rows loaded
-  * Rows after cleaning
-  * Split sizes (train/val/test)
+- Logs mention:
+
+  - Rows loaded
+  - Rows after cleaning
+  - Split sizes (train/val/test)
 
 ---
 
@@ -144,8 +148,8 @@ Train the **baseline models** (LogReg & Linear SVM) and the **DistilBERT hate cl
 
 **Requirements before proceeding:**
 
-* Stage 1 completed – processed CSVs exist
-* Enough disk space for models (~1 GB total if you skip checkpoints)
+- Stage 1 completed – processed CSVs exist
+- Enough disk space for models (~1 GB total if you skip checkpoints)
 
 ---
 
@@ -153,13 +157,13 @@ Train the **baseline models** (LogReg & Linear SVM) and the **DistilBERT hate cl
 
 **STEP [2.a]: Train TF-IDF + Logistic Regression / Linear SVM**
 
-* **Linux / Mac – Run Command:**
+- **Linux / Mac – Run Command:**
 
   ```bash
   bash scripts/run_baselines_local.sh
   ```
 
-* **Windows (PowerShell) – Run Command:**
+- **Windows (PowerShell) – Run Command:**
 
   ```powershell
   .\scripts\run_baselines_local.ps1
@@ -167,15 +171,16 @@ Train the **baseline models** (LogReg & Linear SVM) and the **DistilBERT hate cl
 
 **Expected Result:**
 
-* Training finishes with printed accuracy / F1 metrics.
-* New files in `models/baselines/`:
+- Training finishes with printed accuracy / F1 metrics.
+- New files in `models/baselines/`:
 
-  * `logistic_regression_tfidf.joblib`
-  * `linear_svm_tfidf.joblib`
-* Logs mention performance like:
+  - `logistic_regression_tfidf.joblib`
+  - `linear_svm_tfidf.joblib`
 
-  * Accuracy ≈ 0.93–0.95
-  * Latency tests (sub-millisecond) when run in Docker later.
+- Logs mention performance like:
+
+  - Accuracy ≈ 0.93–0.95
+  - Latency tests (sub-millisecond) when run in Docker later.
 
 ---
 
@@ -183,13 +188,13 @@ Train the **baseline models** (LogReg & Linear SVM) and the **DistilBERT hate cl
 
 **STEP [2.b]: Run quick DistilBERT training (dev config)**
 
-* **Linux / Mac – Run Command:**
+- **Linux / Mac – Run Command:**
 
   ```bash
   bash scripts/run_transformer_local.sh
   ```
 
-* **Windows (PowerShell) – Run Command:**
+- **Windows (PowerShell) – Run Command:**
 
   ```powershell
   .\scripts\run_transformer_local.ps1
@@ -197,18 +202,20 @@ Train the **baseline models** (LogReg & Linear SVM) and the **DistilBERT hate cl
 
 **Expected Result:**
 
-* Script tokenizes data, then shows epoch-by-epoch training logs.
-* On completion, it saves a model under e.g.:
+- Script tokenizes data, then shows epoch-by-epoch training logs.
+- On completion, it saves a model under e.g.:
 
-  * `models/transformer/distilbert/`
-* Files include:
+  - `models/transformer/distilbert/`
 
-  * `model.safetensors`
-  * `config.json`
-  * tokenizer files
-  * `labels.json`
-  * `training_info.json`
-* Metrics show ≈96% accuracy (or better for full training runs).
+- Files include:
+
+  - `model.safetensors`
+  - `config.json`
+  - tokenizer files
+  - `labels.json`
+  - `training_info.json`
+
+- Metrics show ≈96% accuracy (or better for full training runs).
 
 ---
 
@@ -234,12 +241,13 @@ python -m src.models.train_toxicity \
 
 **Expected Result:**
 
-* Longer training (especially on CPU); on GPU with FP16 it completes faster.
-* Models saved under:
+- Longer training (especially on CPU); on GPU with FP16 it completes faster.
+- Models saved under:
 
-  * `models/transformer/distilbert_fullscale/` (if configured)
-  * `models/toxicity_multi_head/`
-* Logs show per-label metrics for toxicity (toxic, severe_toxic, obscene, threat, insult, identity_hate).
+  - `models/transformer/distilbert_fullscale/` (if configured)
+  - `models/toxicity_multi_head/`
+
+- Logs show per-label metrics for toxicity (toxic, severe_toxic, obscene, threat, insult, identity_hate).
 
 ---
 
@@ -250,8 +258,8 @@ Run unit, integration, and API tests to confirm models and pipelines are stable.
 
 **Requirements before proceeding:**
 
-* Stage 2 completed – models exist under `models/`
-* Virtual environment still active
+- Stage 2 completed – models exist under `models/`
+- Virtual environment still active
 
 ---
 
@@ -267,11 +275,12 @@ pytest -q
 
 **Expected Result:**
 
-* All tests run and finish with:
+- All tests run and finish with:
 
-  * `N passed, 0 failed` (where N ≈ 326+ tests)
-* No unhandled exceptions.
-* Optional coverage report (if configured).
+  - `N passed, 0 failed` (where N ≈ 326+ tests)
+
+- No unhandled exceptions.
+- Optional coverage report (if configured).
 
 ---
 
@@ -285,7 +294,7 @@ pytest -q
    bash scripts/run_api_local.sh
    ```
 
-   *(Windows: `.\scripts\run_api_local.ps1`)*
+   _(Windows: `.\scripts\run_api_local.ps1`)_
 
 2. **Run Command – test health (another terminal):**
 
@@ -295,8 +304,8 @@ pytest -q
 
 **Expected Result:**
 
-* Uvicorn logs show the server running on `http://127.0.0.1:8000`.
-* `/health` returns JSON like:
+- Uvicorn logs show the server running on `http://127.0.0.1:8000`.
+- `/health` returns JSON like:
 
   ```json
   {
@@ -305,7 +314,8 @@ pytest -q
     "available_models": [...]
   }
   ```
-* `/docs` is available in the browser at `http://localhost:8000/docs`.
+
+- `/docs` is available in the browser at `http://localhost:8000/docs`.
 
 ---
 
@@ -316,9 +326,9 @@ Package everything into Docker images and run the API (and optional Streamlit UI
 
 **Requirements before proceeding:**
 
-* Docker is installed and running
-* Baseline + DistilBERT models present in `models/`
-* Tests passing from Stage 3
+- Docker is installed and running
+- Baseline + DistilBERT models present in `models/`
+- Tests passing from Stage 3
 
 ---
 
@@ -334,8 +344,8 @@ docker build -t cloud-nlp-classifier:latest .
 
 **Expected Result:**
 
-* Docker build completes successfully, with no errors at the end.
-* `docker images` shows `cloud-nlp-classifier:latest` present.
+- Docker build completes successfully, with no errors at the end.
+- `docker images` shows `cloud-nlp-classifier:latest` present.
 
 ---
 
@@ -351,9 +361,9 @@ docker run -d -p 8000:8000 --name nlp-api cloud-nlp-classifier:latest
 
 **Expected Result:**
 
-* `docker ps` shows a running container `nlp-api` bound to port `8000->8000`.
-* `curl http://localhost:8000/health` returns a healthy JSON response.
-* `http://localhost:8000/docs` accessible in the browser.
+- `docker ps` shows a running container `nlp-api` bound to port `8000->8000`.
+- `curl http://localhost:8000/health` returns a healthy JSON response.
+- `http://localhost:8000/docs` accessible in the browser.
 
 ---
 
@@ -375,9 +385,9 @@ docker run -d -p 8000:8000 --name nlp-api cloud-nlp-classifier:latest
 
 **Expected Result:**
 
-* `docker ps` shows `nlp-ui` running on port `8501`.
-* Browser at `http://localhost:8501` shows the chat-style UI.
-* Sending a message triggers a prediction using the selected model.
+- `docker ps` shows `nlp-ui` running on port `8501`.
+- Browser at `http://localhost:8501` shows the chat-style UI.
+- Sending a message triggers a prediction using the selected model.
 
 ---
 
@@ -393,9 +403,9 @@ docker-compose up -d --build
 
 **Expected Result:**
 
-* Both API and UI containers start.
-* `docker-compose ps` shows services up.
-* `http://localhost:8000/docs` and `http://localhost:8501` are accessible.
+- Both API and UI containers start.
+- `docker-compose ps` shows services up.
+- `http://localhost:8000/docs` and `http://localhost:8501` are accessible.
 
 ---
 
@@ -406,11 +416,11 @@ Use the **single PowerShell script** to deploy the backend to a GCP VM and expos
 
 **Requirements before proceeding:**
 
-* GCP project (e.g., `mnist-k8s-pipeline`) exists
-* Billing enabled, Compute Engine API on
-* `gcloud` authenticated: `gcloud auth login`, `gcloud config set project <PROJECT_ID>`
-* A VM like `nlp-classifier-vm` created (or let the script handle it if configured)
-* You are on **Windows with PowerShell** (script is `.ps1`) or using PowerShell Core on another OS
+- GCP project (e.g., `mnist-k8s-pipeline`) exists
+- Billing enabled, Compute Engine API on
+- `gcloud` authenticated: `gcloud auth login`, `gcloud config set project <PROJECT_ID>`
+- A VM like `nlp-classifier-vm` created (or let the script handle it if configured)
+- You are on **Windows with PowerShell** (script is `.ps1`) or using PowerShell Core on another OS
 
 ---
 
@@ -427,8 +437,8 @@ gcloud compute instances list
 
 **Expected Result:**
 
-* `gcloud config get-value project` prints your target project ID.
-* `gcloud compute instances list` shows `nlp-classifier-vm` (or you know you’ll let the script create one, depending on config).
+- `gcloud config get-value project` prints your target project ID.
+- `gcloud compute instances list` shows `nlp-classifier-vm` (or you know you’ll let the script create one, depending on config).
 
 ---
 
@@ -444,17 +454,18 @@ gcloud compute instances list
 
 **Expected Result:**
 
-* Script logs show sequential phases:
+- Script logs show sequential phases:
 
-  * Bucket creation / verification
-  * Model upload (small, inference-only subset)
-  * VM verification / creation
-  * Repo clone/update on VM
-  * Model download on VM
-  * Docker build on VM
-  * Container start
-  * Health checks (internal + external)
-* Final summary similar to:
+  - Bucket creation / verification
+  - Model upload (small, inference-only subset)
+  - VM verification / creation
+  - Repo clone/update on VM
+  - Model download on VM
+  - Docker build on VM
+  - Container start
+  - Health checks (internal + external)
+
+- Final summary similar to:
 
   ```text
   ============================================
@@ -486,13 +497,14 @@ curl -X POST http://<VM_IP>:8000/predict \
 
 **Expected Result:**
 
-* `/health` returns `"status": "healthy"` with models listed.
-* `/predict` returns JSON with:
+- `/health` returns `"status": "healthy"` with models listed.
+- `/predict` returns JSON with:
 
-  * predicted label (e.g., "Hate")
-  * confidence
-  * model name (e.g., "distilbert")
-* `/docs` is reachable at `http://<VM_IP>:8000/docs` in your browser.
+  - predicted label (e.g., "Hate")
+  - confidence
+  - model name (e.g., "distilbert")
+
+- `/docs` is reachable at `http://<VM_IP>:8000/docs` in your browser.
 
 ---
 
@@ -500,13 +512,13 @@ curl -X POST http://<VM_IP>:8000/predict \
 
 **STEP [5.d]: Stop and start the VM as needed**
 
-* **Stop VM – Run Command:**
+- **Stop VM – Run Command:**
 
   ```bash
   gcloud compute instances stop nlp-classifier-vm --zone=us-central1-a
   ```
 
-* **Start VM – Run Command:**
+- **Start VM – Run Command:**
 
   ```bash
   gcloud compute instances start nlp-classifier-vm --zone=us-central1-a
@@ -514,8 +526,8 @@ curl -X POST http://<VM_IP>:8000/predict \
 
 **Expected Result:**
 
-* When stopped, API is unreachable (no billing for compute).
-* When started again, the `nlp-api` container comes back (if `--restart` policy is used), and the API becomes reachable once more.
+- When stopped, API is unreachable (no billing for compute).
+- When started again, the `nlp-api` container comes back (if `--restart` policy is used), and the API becomes reachable once more.
 
 ---
 
@@ -526,10 +538,10 @@ If you prefer serverless or Kubernetes, use the Docker images built in Stage 4 t
 
 **Requirements before proceeding:**
 
-* Docker images pushed to GCR/Artifact Registry
-* GCP project configured for Cloud Run or GKE
+- Docker images pushed to GCR/Artifact Registry
+- GCP project configured for Cloud Run or GKE
 
-*(See `docs/deployment/` for full, step-by-step guides.)*
+_(See `docs/deployment/` for full, step-by-step guides.)_
 
 ---
 
@@ -542,7 +554,8 @@ You now have a **clear, repeatable path**:
 5. Serve locally (Python or Docker)
 6. Deploy to GCP with a **single script**
 
-From here, you can tweak configs, plug in new models, or extend the UI knowing the full pipeline is solid. 
+From here, you can tweak configs, plug in new models, or extend the UI knowing the full pipeline is solid.
 
 ```
+
 ```
