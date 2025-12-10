@@ -348,7 +348,10 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                 xaxis=dict(range=[0, 100])
             )
             
-            st.plotly_chart(fig, use_container_width=True, key=f"chart_{key_suffix}")
+            # Create centered 70% width container for the chart
+            col1, col2, col3 = st.columns([0.15, 0.7, 0.15])
+            with col2:
+                st.plotly_chart(fig, use_container_width=True, key=f"chart_{key_suffix}")
         
         # Model info badge
         model_badge_color = "#0066CC" if model_type == 'baseline' else "#9C27B0"
