@@ -18,7 +18,8 @@ from src.ui.utils.helpers import (
 
 def get_toxicity_gradient_color(percentage: float) -> str:
     """
-    Get gradient color from green to red based on percentage (0-100).
+    Get exponential gradient color from green to red based on percentage (0-100).
+    Uses exponential curve to favor red more as percentage increases.
     
     Args:
         percentage: Value from 0 to 100
@@ -29,10 +30,18 @@ def get_toxicity_gradient_color(percentage: float) -> str:
     # Clamp percentage to 0-100
     percentage = max(0, min(100, percentage))
     
+    # Normalize to 0-1
+    normalized = percentage / 100
+    
+    # Apply exponential curve (power of 2) to favor red
+    # This makes the transition to red more dramatic at higher percentages
+    red_factor = normalized ** 2
+    green_factor = (1 - normalized) ** 0.5  # Square root to keep some green longer
+    
     # Calculate RGB values
     # Green (0, 255, 0) at 0% -> Red (255, 0, 0) at 100%
-    red = int(255 * (percentage / 100))
-    green = int(255 * (1 - percentage / 100))
+    red = int(255 * red_factor)
+    green = int(255 * green_factor)
     blue = 0
     
     # Convert to hex
