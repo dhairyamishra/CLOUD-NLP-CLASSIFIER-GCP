@@ -145,6 +145,14 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     inference_time = result.get('inference_time_ms', 0.0)
     probabilities = result.get('probabilities', {})
     model_type = result.get('model_type', 'unknown')
+    model_name = result.get('model', 'unknown')
+    
+    # Map numeric labels to meaningful names (only for DistilBERT model)
+    if 'distilbert' in model_name.lower():
+        if label == '0' or label == 0:
+            label = 'Regular Speech'
+        elif label == '1' or label == 1:
+            label = 'Hate Speech'
     
     # Get color and emoji
     color = get_sentiment_color(label)
@@ -201,7 +209,14 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                     # Extract label-score pairs from list of dicts
                     for item in probabilities:
                         if 'label' in item and 'score' in item:
-                            prob_dict[item['label']] = item['score']
+                            # Map numeric labels to meaningful names (only for DistilBERT)
+                            label_val = item['label']
+                            if 'distilbert' in model_name.lower():
+                                if label_val == '0' or label_val == 0:
+                                    label_val = 'Regular Speech'
+                                elif label_val == '1' or label_val == 1:
+                                    label_val = 'Hate Speech'
+                            prob_dict[label_val] = item['score']
                 else:
                     # List of numbers: [score1, score2, ...]
                     prob_dict = {f"Class {i}": score for i, score in enumerate(probabilities)}
