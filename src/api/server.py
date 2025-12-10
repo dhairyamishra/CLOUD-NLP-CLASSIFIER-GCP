@@ -257,12 +257,23 @@ class ModelManager:
         
         # For baseline models, we need to get classes from the classifier
         classifier = self.pipeline.named_steps['classifier']
-        # Convert to strings to ensure Pydantic validation passes
-        self.classes = [str(label) for label in classifier.classes_.tolist()]
+        raw_classes = classifier.classes_.tolist()
         
-        # Create label mappings
-        self.id2label = {i: str(label) for i, label in enumerate(self.classes)}
-        self.label2id = {str(label): i for i, label in enumerate(self.classes)}
+        # Map numeric labels to meaningful names
+        # Hate speech dataset: 0 = regular speech, 1 = hate speech
+        label_name_mapping = {
+            0: "Regular Speech",
+            1: "Hate Speech"
+        }
+        
+        # Convert to strings with meaningful names
+        self.classes = [label_name_mapping.get(int(label), str(label)) for label in raw_classes]
+        
+        # Create label mappings (use meaningful names)
+        self.id2label = {i: label_name_mapping.get(int(raw_classes[i]), str(raw_classes[i])) 
+                         for i in range(len(raw_classes))}
+        self.label2id = {label_name_mapping.get(int(raw_classes[i]), str(raw_classes[i])): i 
+                         for i in range(len(raw_classes))}
         
         logger.info(f"Number of classes: {len(self.classes)}")
         logger.info(f"Classes: {self.classes}")
@@ -393,10 +404,12 @@ class ModelManager:
         # Start timing
         start_time = time.time()
         
-        # Make prediction
+        # Make prediction (returns numeric label like 0 or 1)
         predicted_label_raw = self.pipeline.predict([text])[0]
-        # Convert to string to ensure consistency
-        predicted_label = str(predicted_label_raw)
+        predicted_idx = int(predicted_label_raw)
+        
+        # Convert numeric prediction to meaningful label name
+        predicted_label = self.id2label[predicted_idx]
         
         # Get probabilities if available
         classifier = self.pipeline.named_steps['classifier']
@@ -426,8 +439,7 @@ class ModelManager:
             # Fallback: uniform probabilities
             probs_np = np.ones(len(self.classes)) / len(self.classes)
         
-        # Get predicted class index and confidence
-        predicted_idx = self.label2id[str(predicted_label)]
+        # Get confidence for predicted class
         confidence = float(probs_np[predicted_idx])
         
         # Calculate inference time
