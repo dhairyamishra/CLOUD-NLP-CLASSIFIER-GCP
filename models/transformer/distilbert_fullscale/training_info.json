@@ -1,0 +1,20 @@
+{
+  "metrics": {
+    "accuracy": 0.9669221460266236,
+    "f1_macro": 0.9416752742964698,
+    "f1_weighted": 0.9671698161355646,
+    "precision_macro": 0.9352264605836906,
+    "precision_weighted": 0.9675501719920564,
+    "recall_macro": 0.9484606295909617,
+    "recall_weighted": 0.9669221460266236,
+    "roc_auc": 0.9900268932473246
+  },
+  "training_time_seconds": 729.1415677070618,
+  "training_time_minutes": 12.152359461784362,
+  "avg_inference_time_ms": 1.7966794967651367,
+  "num_classes": 2,
+  "classes": [
+    "0",
+    "1"
+  ]
+}

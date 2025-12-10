@@ -1,27 +1,53 @@
 # Configuration for Baseline Models (TF-IDF + Classical ML)
+# FULL-SCALE TRAINING MODE - Comprehensive hyperparameters for production-quality models
 
 # Vectorizer settings
 vectorizer:
   type: "tfidf"  # Options: "count", "tfidf"
-  max_features: 2000  # SUPER REDUCED for ultra-fast testing
-  ngram_range: [1, 1]  # Unigrams only
-  min_df: 5  # INCREASED to reduce features
-  max_df: 0.9  # More aggressive filtering
+  max_features: 10000  # FULL SCALE: Capture rich vocabulary (10k features)
+  ngram_range: [1, 3]  # Unigrams, bigrams, and trigrams for better context
+  min_df: 2  # Minimum document frequency (more inclusive)
+  max_df: 0.95  # Maximum document frequency (keep more terms)
+  sublinear_tf: true  # Apply sublinear tf scaling (1 + log(tf))
+  use_idf: true  # Use inverse document frequency weighting
+  smooth_idf: true  # Smooth idf weights
+  norm: "l2"  # L2 normalization
   
-# Logistic Regression settings
+# Logistic Regression settings - FULL SCALE
 logistic_regression:
-  C: 1.0  # Inverse regularization strength
-  max_iter: 100  # MINIMAL iterations for speed
-  class_weight: "balanced"  # Handle class imbalance
-  solver: "lbfgs"
+  C: 1.0  # Inverse regularization strength (will be tuned via grid search)
+  max_iter: 1000  # FULL SCALE: Allow sufficient iterations for convergence
+  class_weight: "balanced"  # Handle class imbalance automatically
+  solver: "saga"  # SAGA solver supports L1, L2, and elastic-net penalties
+  penalty: "l2"  # L2 regularization (Ridge)
+  tol: 1.0e-4  # Tolerance for stopping criteria
   random_state: 42
+  n_jobs: -1  # Use all CPU cores
+  verbose: 1  # Show convergence progress
+  warm_start: false  # Don't reuse previous solution
+  
+  # Hyperparameter tuning grid (optional - for grid search)
+  param_grid:
+    C: [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]  # Regularization strength
+    penalty: ["l1", "l2"]  # Regularization type
+    solver: ["saga"]  # SAGA supports both L1 and L2
 
-# Linear SVM settings
+# Linear SVM settings - FULL SCALE
 linear_svm:
-  C: 1.0
-  max_iter: 100  # MINIMAL iterations for speed
-  class_weight: "balanced"
+  C: 1.0  # Regularization parameter (will be tuned)
+  max_iter: 2000  # FULL SCALE: More iterations for convergence
+  class_weight: "balanced"  # Handle class imbalance
+  loss: "squared_hinge"  # Standard SVM loss (squared hinge)
+  penalty: "l2"  # L2 regularization
+  dual: true  # Dual formulation (recommended for n_samples < n_features)
+  tol: 1.0e-4  # Tolerance for stopping criteria
   random_state: 42
+  verbose: 1  # Show training progress
+  
+  # Hyperparameter tuning grid (optional - for grid search)
+  param_grid:
+    C: [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]  # Regularization strength
+    loss: ["hinge", "squared_hinge"]  # Loss function
 
 # Data paths
 data:

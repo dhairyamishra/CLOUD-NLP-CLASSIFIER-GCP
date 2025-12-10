@@ -78,7 +78,7 @@ def train_and_evaluate_model(
     else:
         raise ValueError(f"Unknown model type: {model_name}")
     
-    # Initialize model
+    # Initialize model with all configuration parameters
     model = BaselineTextClassifier(
         vectorizer_type=vectorizer_config['type'],
         classifier_type=classifier_type,
@@ -86,10 +86,25 @@ def train_and_evaluate_model(
         ngram_range=tuple(vectorizer_config['ngram_range']),
         min_df=vectorizer_config['min_df'],
         max_df=vectorizer_config['max_df'],
+        # Vectorizer advanced parameters
+        sublinear_tf=vectorizer_config.get('sublinear_tf', True),
+        use_idf=vectorizer_config.get('use_idf', True),
+        smooth_idf=vectorizer_config.get('smooth_idf', True),
+        norm=vectorizer_config.get('norm', 'l2'),
+        # Classifier parameters
         C=model_config['C'],
         max_iter=model_config['max_iter'],
         class_weight=model_config['class_weight'],
-        random_state=model_config['random_state']
+        random_state=model_config['random_state'],
+        # Classifier advanced parameters
+        solver=model_config.get('solver', 'saga'),
+        penalty=model_config.get('penalty', 'l2'),
+        tol=model_config.get('tol', 1e-4),
+        n_jobs=model_config.get('n_jobs', -1),
+        verbose=model_config.get('verbose', 1),
+        # SVM-specific parameters
+        loss=model_config.get('loss', 'squared_hinge'),
+        dual=model_config.get('dual', True)
     )
     
     # Train model

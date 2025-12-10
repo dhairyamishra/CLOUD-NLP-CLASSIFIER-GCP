@@ -33,7 +33,21 @@ class BaselineTextClassifier:
         C: float = 1.0,
         max_iter: int = 1000,
         class_weight: str = "balanced",
-        random_state: int = 42
+        random_state: int = 42,
+        # Additional vectorizer parameters
+        sublinear_tf: bool = True,
+        use_idf: bool = True,
+        smooth_idf: bool = True,
+        norm: str = "l2",
+        # Additional classifier parameters
+        solver: str = "saga",
+        penalty: str = "l2",
+        tol: float = 1e-4,
+        n_jobs: int = -1,
+        verbose: int = 0,
+        # SVM-specific parameters
+        loss: str = "squared_hinge",
+        dual: bool = True
     ):
         """
         Initialize baseline classifier.
@@ -60,6 +74,20 @@ class BaselineTextClassifier:
         self.max_iter = max_iter
         self.class_weight = class_weight
         self.random_state = random_state
+        # Vectorizer parameters
+        self.sublinear_tf = sublinear_tf
+        self.use_idf = use_idf
+        self.smooth_idf = smooth_idf
+        self.norm = norm
+        # Classifier parameters
+        self.solver = solver
+        self.penalty = penalty
+        self.tol = tol
+        self.n_jobs = n_jobs
+        self.verbose = verbose
+        # SVM parameters
+        self.loss = loss
+        self.dual = dual
         
         # Initialize pipeline
         self.pipeline = self._build_pipeline()
@@ -72,7 +100,11 @@ class BaselineTextClassifier:
                 max_features=self.max_features,
                 ngram_range=self.ngram_range,
                 min_df=self.min_df,
-                max_df=self.max_df
+                max_df=self.max_df,
+                sublinear_tf=self.sublinear_tf,
+                use_idf=self.use_idf,
+                smooth_idf=self.smooth_idf,
+                norm=self.norm
             )
         elif self.vectorizer_type == "count":
             vectorizer = CountVectorizer(
@@ -91,14 +123,23 @@ class BaselineTextClassifier:
                 max_iter=self.max_iter,
                 class_weight=self.class_weight,
                 random_state=self.random_state,
-                solver='lbfgs'
+                solver=self.solver,
+                penalty=self.penalty,
+                tol=self.tol,
+                n_jobs=self.n_jobs,
+                verbose=self.verbose
             )
         elif self.classifier_type == "svm":
             classifier = LinearSVC(
                 C=self.C,
                 max_iter=self.max_iter,
                 class_weight=self.class_weight,
-                random_state=self.random_state
+                random_state=self.random_state,
+                loss=self.loss,
+                penalty=self.penalty,
+                dual=self.dual,
+                tol=self.tol,
+                verbose=self.verbose
             )
         else:
             raise ValueError(f"Unknown classifier type: {self.classifier_type}")
