@@ -132,9 +132,14 @@ def render_api_sidebar(api_handler, models_data: Dict[str, Any]):
         # Create model options
         model_options = {}
         for model in available_models:
-            model_name = model.get('name', 'Unknown')
-            model_type = model.get('type', 'unknown')
-            display_name = f"{model_name} ({model_type})"
+            # Handle both string and dict formats
+            if isinstance(model, str):
+                model_name = model
+                display_name = model_name
+            else:
+                model_name = model.get('name', 'Unknown')
+                model_type = model.get('type', 'unknown')
+                display_name = f"{model_name} ({model_type})"
             model_options[display_name] = model_name
         
         # Find current selection
@@ -157,12 +162,19 @@ def render_api_sidebar(api_handler, models_data: Dict[str, Any]):
         
         selected_model = model_options[selected_display]
         
-        # Show model info
+        # Show model info (only if models are dicts with details)
         for model in available_models:
-            if model.get('name') == selected_model:
+            if isinstance(model, dict):
+                if model.get('name') == selected_model:
+                    with st.expander("📊 Model Details", expanded=False):
+                        st.markdown(f"**Type:** {model.get('type', 'N/A')}")
+                        st.markdown(f"**Status:** {model.get('status', 'N/A')}")
+                    break
+            elif model == selected_model:
+                # Simple string model name - show basic info
                 with st.expander("📊 Model Details", expanded=False):
-                    st.markdown(f"**Type:** {model.get('type', 'N/A')}")
-                    st.markdown(f"**Status:** {model.get('status', 'N/A')}")
+                    st.markdown(f"**Model:** {selected_model}")
+                    st.markdown(f"**Status:** Active")
                 break
         
         # Switch model button
