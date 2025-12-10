@@ -85,12 +85,20 @@ data/processed/*.parquet
 models/baselines/*.joblib
 models/baselines/*.pkl
 models/baselines/*.pickle
-
+*vocab.txt 
+*tokenizer.json
 # Transformer models - PyTorch binaries
 models/transformer/**/*.bin
 models/transformer/**/pytorch_model.bin
 models/transformer/**/model.safetensors
 models/transformer/**/*.safetensors
+
+# Toxicity models - PyTorch binaries
+models/toxicity_multi_head/**/*.bin
+models/toxicity_multi_head/**/pytorch_model.bin
+models/toxicity_multi_head/**/model.safetensors
+models/toxicity_multi_head/**/*.safetensors
+models/toxicity_multi_head/**/vocab.txt
 
 # Transformer models - Keep config and metadata
 !models/transformer/**/config.json
@@ -98,6 +106,13 @@ models/transformer/**/*.safetensors
 !models/transformer/**/training_info.json
 !models/transformer/**/tokenizer_config.json
 !models/transformer/**/special_tokens_map.json
+
+# Toxicity models - Keep config and metadata
+!models/toxicity_multi_head/**/config.json
+!models/toxicity_multi_head/**/labels.json
+!models/toxicity_multi_head/**/tokenizer_config.json
+!models/toxicity_multi_head/**/special_tokens_map.json
+!models/toxicity_multi_head/**/tokenizer.json
 
 # Transformer checkpoints (can be very large)
 models/transformer/**/checkpoint-*/
@@ -145,6 +160,11 @@ docker-compose.override.yml
 !models/transformer/**/training_info.json
 !models/transformer/**/tokenizer_config.json
 !models/transformer/**/special_tokens_map.json
+!models/toxicity_multi_head/**/config.json
+!models/toxicity_multi_head/**/labels.json
+!models/toxicity_multi_head/**/tokenizer_config.json
+!models/toxicity_multi_head/**/special_tokens_map.json
+!models/toxicity_multi_head/**/tokenizer.json
 credentials.json
 service-account*.json
 

@@ -63,6 +63,21 @@ class PredictResponse(BaseModel):
     inference_time_ms: float = Field(..., description="Inference time in milliseconds")
 
 
+class ToxicityScore(BaseModel):
+    """Individual toxicity category score."""
+    category: str = Field(..., description="Toxicity category name")
+    score: float = Field(..., description="Probability score (0-1)", ge=0.0, le=1.0)
+    flagged: bool = Field(..., description="Whether this category exceeds threshold")
+
+
+class ToxicityResponse(BaseModel):
+    """Response model for toxicity prediction endpoint."""
+    is_toxic: bool = Field(..., description="Whether any toxicity category was flagged")
+    toxicity_scores: List[ToxicityScore] = Field(..., description="Scores for all toxicity categories")
+    flagged_categories: List[str] = Field(..., description="List of flagged category names")
+    inference_time_ms: float = Field(..., description="Inference time in milliseconds")
+
+
 class HealthResponse(BaseModel):
     """Response model for health check endpoint."""
     status: str = Field(..., description="Service status")
@@ -97,6 +112,11 @@ class ModelManager:
             "type": "baseline",
             "path": "models/baselines/linear_svm_tfidf.joblib",
             "description": "Linear SVM with TF-IDF (fast, robust)"
+        },
+        "toxicity": {
+            "type": "toxicity",
+            "path": "models/toxicity_multi_head",
+            "description": "Multi-label toxicity classification (6 categories)"
         }
     }
     
@@ -175,6 +195,8 @@ class ModelManager:
             self._load_transformer_model(model_path)
         elif model_config["type"] == "baseline":
             self._load_baseline_model(model_path)
+        elif model_config["type"] == "toxicity":
+            self._load_toxicity_model(model_path)
         else:
             raise ValueError(f"Unknown model type: {model_config['type']}")
         
@@ -249,6 +271,46 @@ class ModelManager:
         self.device = "cpu"
         logger.info("Using CPU (sklearn models)")
     
+    def _load_toxicity_model(self, model_path: Path):
+        """Load multi-label toxicity classification model."""
+        # Determine device
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+            logger.info("Using CUDA (GPU)")
+        else:
+            self.device = torch.device("cpu")
+            logger.info("Using CPU")
+        
+        # Load label mappings
+        labels_path = model_path / "labels.json"
+        if not labels_path.exists():
+            raise FileNotFoundError(f"Label mappings not found: {labels_path}")
+        
+        logger.info(f"Loading label mappings from: {labels_path}")
+        with open(labels_path, 'r') as f:
+            self.label_mappings = json.load(f)
+        
+        self.id2label = {int(k): v for k, v in self.label_mappings['id2label'].items()}
+        self.label2id = self.label_mappings['label2id']
+        self.classes = self.label_mappings['classes']
+        
+        logger.info(f"Number of toxicity categories: {len(self.classes)}")
+        logger.info(f"Categories: {self.classes}")
+        
+        # Load tokenizer
+        logger.info(f"Loading tokenizer from: {model_path}")
+        self.tokenizer = DistilBertTokenizer.from_pretrained(str(model_path))
+        logger.info("Tokenizer loaded successfully!")
+        
+        # Load model
+        logger.info(f"Loading toxicity model from: {model_path}")
+        self.model = DistilBertForSequenceClassification.from_pretrained(
+            str(model_path)
+        )
+        self.model.to(self.device)
+        self.model.eval()  # Set to evaluation mode
+        logger.info("Toxicity model loaded successfully!")
+    
     def predict(self, text: str) -> Dict:
         """
         Make prediction for input text using current model.
@@ -267,6 +329,8 @@ class ModelManager:
             return self._predict_transformer(text)
         elif self.current_model_type == "baseline":
             return self._predict_baseline(text)
+        elif self.current_model_type == "toxicity":
+            return self._predict_toxicity(text)
         else:
             raise RuntimeError(f"Unknown model type: {self.current_model_type}")
     
@@ -389,12 +453,71 @@ class ModelManager:
             "model": self.current_model_name
         }
     
+    def _predict_toxicity(self, text: str, threshold: float = 0.5) -> Dict:
+        """Make prediction using multi-label toxicity model."""
+        # Start timing
+        start_time = time.time()
+        
+        # Tokenize input
+        inputs = self.tokenizer(
+            text,
+            padding=True,
+            truncation=True,
+            max_length=256,
+            return_tensors="pt"
+        )
+        
+        # Move inputs to device
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        
+        # Make prediction
+        with torch.no_grad():
+            outputs = self.model(**inputs)
+            logits = outputs.logits
+            
+            # Apply sigmoid for multi-label classification
+            probs = torch.sigmoid(logits)
+            probs_np = probs.cpu().numpy()[0]
+        
+        # Calculate inference time
+        inference_time = (time.time() - start_time) * 1000  # Convert to ms
+        
+        # Prepare toxicity scores for all categories
+        toxicity_scores = []
+        flagged_categories = []
+        
+        for i, category in enumerate(self.classes):
+            score = float(probs_np[i])
+            is_flagged = score > threshold
+            
+            toxicity_scores.append({
+                "category": category,
+                "score": score,
+                "flagged": is_flagged
+            })
+            
+            if is_flagged:
+                flagged_categories.append(category)
+        
+        # Determine if overall toxic
+        is_toxic = len(flagged_categories) > 0
+        
+        return {
+            "is_toxic": is_toxic,
+            "toxicity_scores": toxicity_scores,
+            "flagged_categories": flagged_categories,
+            "inference_time_ms": inference_time,
+            "model": self.current_model_name
+        }
+    
     def is_loaded(self) -> bool:
         """Check if a model is loaded."""
         if self.current_model_type == "transformer":
             return self.model is not None and self.tokenizer is not None
         elif self.current_model_type == "baseline":
             return self.pipeline is not None
+        elif self.current_model_type == "toxicity":
+            return self.model is not None and self.tokenizer is not None
         return False
 
 
@@ -431,8 +554,8 @@ async def lifespan(app: FastAPI):
 # Initialize FastAPI app with lifespan
 app = FastAPI(
     title="Text Classification API",
-    description="FastAPI server for text classification with multiple models (DistilBERT, Logistic Regression, Linear SVM)",
-    version="2.0.0",
+    description="FastAPI server for text classification with multiple models (DistilBERT, Logistic Regression, Linear SVM) and multi-label toxicity detection",
+    version="3.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan
@@ -537,10 +660,11 @@ async def root():
     
     return {
         "message": "Text Classification API",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "endpoints": {
             "health": "/health",
             "predict": "/predict",
+            "predict_toxicity": "/predict/toxicity",
             "models": "/models",
             "switch_model": "/models/switch",
             "docs": "/docs",
@@ -644,6 +768,70 @@ async def switch_model(request: SwitchModelRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to switch model: {str(e)}"
+        )
+
+
+@app.post(
+    "/predict/toxicity",
+    response_model=ToxicityResponse,
+    summary="Predict Toxicity",
+    description="Analyze text for multiple toxicity categories (toxic, severe_toxic, obscene, threat, insult, identity_hate)"
+)
+async def predict_toxicity(request: PredictRequest):
+    """
+    Toxicity prediction endpoint.
+    
+    Analyzes text for 6 different types of toxicity:
+    - toxic: General toxicity
+    - severe_toxic: Extremely toxic content
+    - obscene: Obscene language
+    - threat: Threatening language
+    - insult: Insulting content
+    - identity_hate: Identity-based hate speech
+    
+    Args:
+        request: Request containing text to analyze
+        
+    Returns:
+        Toxicity analysis with scores for all categories
+        
+    Raises:
+        HTTPException: If toxicity model is not loaded or prediction fails
+    """
+    # Check if toxicity model is loaded
+    if not model_manager.is_loaded() or model_manager.current_model_name != "toxicity":
+        # Try to load toxicity model
+        try:
+            logger.info("Toxicity model not loaded, attempting to load...")
+            model_manager.load_model("toxicity")
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Toxicity model not available: {str(e)}"
+            )
+    
+    # Make prediction
+    try:
+        result = model_manager._predict_toxicity(request.text)
+        
+        # Convert to response format
+        toxicity_scores = [
+            ToxicityScore(**score)
+            for score in result["toxicity_scores"]
+        ]
+        
+        return ToxicityResponse(
+            is_toxic=result["is_toxic"],
+            toxicity_scores=toxicity_scores,
+            flagged_categories=result["flagged_categories"],
+            inference_time_ms=result["inference_time_ms"]
+        )
+        
+    except Exception as e:
+        logger.error(f"Toxicity prediction failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Toxicity prediction failed: {str(e)}"
         )
 
 
