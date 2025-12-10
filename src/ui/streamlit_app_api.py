@@ -152,8 +152,8 @@ def render_api_sidebar(api_handler, models_data: Dict[str, Any]):
         if current_display is None and model_options:
             current_display = list(model_options.keys())[0]
         
-        # Model selector
-        selected_display = st.selectbox(
+        # Model selector with radio buttons
+        selected_display = st.radio(
             "Choose a model:",
             options=list(model_options.keys()),
             index=list(model_options.keys()).index(current_display) if current_display else 0,
