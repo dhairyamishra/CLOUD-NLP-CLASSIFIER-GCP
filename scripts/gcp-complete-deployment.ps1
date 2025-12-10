@@ -19,7 +19,7 @@ param(
     [string]$Region = "us-central1",
     [string]$BucketName = "nlp-classifier-models",
     [string]$GitRepo = "https://github.com/dhairyamishra/CLOUD-NLP-CLASSIFIER-GCP.git",
-    [string]$Branch = "main",
+    [string]$Branch = "dhairya/gcp-public-deployment",
     [string]$ModelsPath = "C:\--DPM-MAIN-DIR--\windsurf_projects\CLOUD-NLP-CLASSIFIER-GCP\models",
     [switch]$SkipVMCreation,
     [switch]$SkipModelUpload,
@@ -379,23 +379,7 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
 Write-Host "[1/5] Cloning repository..." -ForegroundColor Cyan
-
-# First, detect the default branch
-$detectBranchCmd = @"
-git ls-remote --symref $GitRepo HEAD | grep 'ref:' | awk '{print `$2}' | sed 's|refs/heads/||'
-"@
-
-try {
-    $detectedBranch = gcloud compute ssh $VMName --zone=$Zone --command="$detectBranchCmd" 2>&1
-    if ($LASTEXITCODE -eq 0 -and $detectedBranch) {
-        $Branch = $detectedBranch.Trim()
-        Write-Host "Detected branch: $Branch" -ForegroundColor Gray
-    } else {
-        Write-Host "Could not detect branch, using: $Branch" -ForegroundColor Gray
-    }
-} catch {
-    Write-Host "Could not detect branch, using: $Branch" -ForegroundColor Gray
-}
+Write-Host "Using branch: $Branch" -ForegroundColor Gray
 
 $cloneCmd = @"
 set -e  # Exit on any error

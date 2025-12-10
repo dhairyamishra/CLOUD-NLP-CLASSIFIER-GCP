@@ -4,8 +4,38 @@
 
 ```powershell
 # Run the fixed deployment script
-.\scripts\gcp-complete-deployment.ps1
+.\scripts\gcp-complete-deployment.ps1 -NoCheckpoints
 ```
+
+---
+
+## ✅ SUCCESSFUL DEPLOYMENT RESULTS (2025-12-10)
+
+**Status**: ✅ **ALL 4 MODELS WORKING PERFECTLY**  
+**API URL**: `http://35.232.76.140:8000`  
+**Branch**: `dhairya/gcp-public-deployment`  
+**Duration**: ~2-3 minutes (optimized)
+
+### **Performance Results:**
+- **Logistic Regression**: 1.84ms (~543 req/s)
+- **Linear SVM**: 1.86ms (~537 req/s)  
+- **DistilBERT**: 54.70ms (~18 req/s)
+- **Toxicity**: 321.73ms (~3 req/s, multi-label)
+
+### **All Models Working:**
+- ✅ **DistilBERT** (transformer, best accuracy)
+- ✅ **Logistic Regression** (baseline, 30x faster)
+- ✅ **Linear SVM** (baseline, 29x faster)
+- ✅ **Toxicity** (**FIXED** - now works with /predict endpoint!)
+
+### **API Endpoints Verified:**
+- ✅ `/health` - Returns all 4 models available
+- ✅ `/predict` - Works with all models including toxicity
+- ✅ `/models` - Lists model details and capabilities
+- ✅ `/models/switch` - Dynamic switching between models
+- ✅ `/docs` - Interactive API documentation
+
+---
 
 ## What's Fixed
 

@@ -116,21 +116,35 @@ Models:  http://35.232.76.140:8000/models
 # Health check
 curl http://35.232.76.140:8000/health
 
-# Prediction
+# Prediction with DistilBERT (default)
 curl -X POST http://35.232.76.140:8000/predict `
   -H "Content-Type: application/json" `
   -d '{"text": "This is a test message"}'
 
-# List models
+# List all models
 curl http://35.232.76.140:8000/models
 
-# Switch model
+# Switch to ultra-fast Logistic Regression
 curl -X POST http://35.232.76.140:8000/models/switch `
   -H "Content-Type: application/json" `
   -d '{"model_name": "logistic_regression"}'
+
+# Make prediction with Logistic Regression (~30x faster!)
+curl -X POST http://35.232.76.140:8000/predict `
+  -H "Content-Type: application/json" `
+  -d '{"text": "This should be much faster!"}'
 ```
 
-### SSH into VM
+### Performance Results
+**All 4 models working perfectly:**
+- **Logistic Regression**: 1.84ms (~543 req/s)
+- **Linear SVM**: 1.86ms (~537 req/s)
+- **DistilBERT**: 54.70ms (~18 req/s)
+- **Toxicity**: 321.73ms (~3 req/s, multi-label)
+
+---
+
+## Stop VM to Save Costs
 ```powershell
 gcloud compute ssh nlp-classifier-vm --zone=us-central1-a
 ```
