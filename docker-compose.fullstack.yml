@@ -1,0 +1,85 @@
+# ============================================================================
+# Docker Compose Configuration for Full-Stack NLP Classifier
+# ============================================================================
+# This file runs both API and UI together for local testing
+#
+# Usage:
+#   docker-compose -f docker-compose.fullstack.yml up -d
+#   docker-compose -f docker-compose.fullstack.yml down
+#   docker-compose -f docker-compose.fullstack.yml logs -f
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # Backend API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cloud-nlp-classifier:latest
+    container_name: nlp-api
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=info
+      - WORKERS=1
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - nlp-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 3G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # Frontend UI (API Mode)
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit.api
+    image: cloud-nlp-ui:latest
+    container_name: nlp-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - nlp-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 500M
+
+networks:
+  nlp-network:
+    driver: bridge
+    name: nlp-network
