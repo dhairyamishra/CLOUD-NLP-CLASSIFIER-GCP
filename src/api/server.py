@@ -485,6 +485,8 @@ class ModelManager:
         # Prepare toxicity scores for all categories
         toxicity_scores = []
         flagged_categories = []
+        max_score = 0.0
+        max_category = None
         
         for i, category in enumerate(self.classes):
             score = float(probs_np[i])
@@ -498,16 +500,38 @@ class ModelManager:
             
             if is_flagged:
                 flagged_categories.append(category)
+            
+            # Track highest scoring category
+            if score > max_score:
+                max_score = score
+                max_category = category
         
         # Determine if overall toxic
         is_toxic = len(flagged_categories) > 0
         
+        # For compatibility with /predict endpoint, also return single-label format
+        # Use "toxic" if any category is flagged, otherwise "non-toxic"
+        predicted_label = "toxic" if is_toxic else "non-toxic"
+        confidence = max_score if is_toxic else (1.0 - max_score)
+        
+        # Create scores in single-label format for compatibility
+        scores = [
+            {"label": category, "score": float(probs_np[i])}
+            for i, category in enumerate(self.classes)
+        ]
+        scores = sorted(scores, key=lambda x: x['score'], reverse=True)
+        
         return {
+            # Single-label format (for /predict endpoint)
+            "predicted_label": predicted_label,
+            "confidence": confidence,
+            "scores": scores,
+            "inference_time_ms": inference_time,
+            "model": self.current_model_name,
+            # Multi-label format (for /predict/toxicity endpoint)
             "is_toxic": is_toxic,
             "toxicity_scores": toxicity_scores,
             "flagged_categories": flagged_categories,
-            "inference_time_ms": inference_time,
-            "model": self.current_model_name
         }
     
     def is_loaded(self) -> bool:

@@ -1,0 +1,73 @@
+COPY THIS TO .JSON
+
+{
+  "version": "1.0.0",
+  "last_updated": "2025-12-10T12:00:00-05:00",
+  "model_prefix": "auto",
+  "models": {
+    "baselines": {
+      "version": "1.0.0",
+      "files": [
+        "linear_svm_tfidf.joblib",
+        "logistic_regression_tfidf.joblib",
+        "labels.json"
+      ],
+      "last_updated": "2025-12-10T12:00:00-05:00",
+      "size_mb": 0.9
+    },
+    "toxicity_multi_head": {
+      "version": "1.0.0",
+      "files": [
+        "config.json",
+        "model.safetensors",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "special_tokens_map.json",
+        "vocab.txt",
+        "labels.json"
+      ],
+      "last_updated": "2025-12-10T12:00:00-05:00",
+      "size_mb": 256,
+      "exclude_checkpoints": true
+    },
+    "transformer_distilbert": {
+      "version": "1.0.0",
+      "files": [
+        "config.json",
+        "model.safetensors",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "special_tokens_map.json",
+        "vocab.txt",
+        "labels.json"
+      ],
+      "last_updated": "2025-12-10T12:00:00-05:00",
+      "size_mb": 256,
+      "exclude_checkpoints": true
+    },
+    "transformer_distilbert_fullscale": {
+      "version": "1.0.0",
+      "files": [
+        "config.json",
+        "model.safetensors",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "special_tokens_map.json",
+        "vocab.txt",
+        "labels.json"
+      ],
+      "last_updated": "2025-12-10T12:00:00-05:00",
+      "size_mb": 256,
+      "exclude_checkpoints": true
+    }
+  },
+  "notes": {
+    "version_format": "MAJOR.MINOR.PATCH",
+    "version_rules": {
+      "MAJOR": "Breaking changes (model architecture change, incompatible API)",
+      "MINOR": "New features (new model added, improved accuracy)",
+      "PATCH": "Bug fixes (training fixes, minor improvements)"
+    },
+    "usage": "Increment version when models are retrained or updated. Upload script will compare versions and skip upload if versions match."
+  }
+}
