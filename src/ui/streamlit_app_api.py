@@ -162,6 +162,16 @@ def render_api_sidebar(api_handler, models_data: Dict[str, Any]):
         
         selected_model = model_options[selected_display]
         
+        # Auto-switch model when selection changes
+        if selected_model != current_model:
+            with st.spinner(f"Switching to {selected_model}..."):
+                result = api_handler.switch_model(selected_model)
+                if 'error' in result:
+                    st.error(f"Failed to switch: {result['error']}")
+                else:
+                    st.success(f"Switched to {selected_model}")
+                    st.rerun()
+        
         # Show model info (only if models are dicts with details)
         for model in available_models:
             if isinstance(model, dict):
@@ -178,17 +188,6 @@ def render_api_sidebar(api_handler, models_data: Dict[str, Any]):
                     st.markdown(f"**Model:** {selected_model}")
                     st.markdown(f"**Status:** Active")
                 break
-        
-        # Switch model button
-        if selected_model != current_model:
-            if st.button("🔄 Switch Model", use_container_width=True):
-                with st.spinner(f"Switching to {selected_model}..."):
-                    result = api_handler.switch_model(selected_model)
-                    if 'error' in result:
-                        st.error(f"Failed to switch: {result['error']}")
-                    else:
-                        st.success(f"Switched to {selected_model}")
-                        st.rerun()
         
         st.markdown("---")
         
