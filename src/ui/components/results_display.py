@@ -15,6 +15,99 @@ from src.ui.utils.helpers import (
 )
 
 
+def render_toxicity_results(result: Dict[str, Any], key_suffix: str = None) -> None:
+    """
+    Render toxicity prediction results (multi-label).
+    
+    Args:
+        result: Dictionary with toxicity prediction results.
+        key_suffix: Optional suffix for unique widget keys.
+    """
+    import time
+    
+    # Generate unique key if not provided
+    if key_suffix is None:
+        key_suffix = str(time.time()).replace('.', '_')
+    
+    # Check for errors
+    if 'error' in result:
+        st.error(f"❌ {result['error']}")
+        return
+    
+    # Extract data
+    is_toxic = result.get('is_toxic', False)
+    toxicity_scores = result.get('toxicity_scores', [])
+    flagged_categories = result.get('flagged_categories', [])
+    
+    # Overall status
+    if is_toxic:
+        st.markdown(
+            f"""
+            <div style='
+                background-color: #ff444420;
+                border-left: 4px solid #ff4444;
+                padding: 15px;
+                border-radius: 5px;
+                margin: 10px 0;
+            '>
+                <h3 style='margin: 0; color: #ff4444;'>
+                    🚨 Toxic Content Detected
+                </h3>
+                <p style='margin: 5px 0 0 0; font-size: 16px;'>
+                    <strong>Flagged categories:</strong> {', '.join(flagged_categories)}
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            f"""
+            <div style='
+                background-color: #00cc0020;
+                border-left: 4px solid #00cc00;
+                padding: 15px;
+                border-radius: 5px;
+                margin: 10px 0;
+            '>
+                <h3 style='margin: 0; color: #00cc00;'>
+                    ✅ Non-Toxic Content
+                </h3>
+                <p style='margin: 5px 0 0 0; font-size: 16px;'>
+                    No toxicity categories flagged
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    # Toxicity scores
+    st.markdown("### 📊 Toxicity Category Scores")
+    
+    for score_data in toxicity_scores:
+        category = score_data['category']
+        score = score_data['score']
+        flagged = score_data['flagged']
+        
+        # Color based on score
+        if score > 0.7:
+            color = "#ff4444"
+        elif score > 0.5:
+            color = "#ff8800"
+        elif score > 0.3:
+            color = "#ffcc00"
+        else:
+            color = "#00cc00"
+        
+        # Display with progress bar
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            flag_emoji = "⚠️" if flagged else "✅"
+            st.markdown(f"{flag_emoji} **{category.replace('_', ' ').title()}**")
+            st.progress(score)
+        with col2:
+            st.markdown(f"<div style='color: {color}; font-size: 20px; font-weight: bold; text-align: right;'>{score:.1%}</div>", unsafe_allow_html=True)
+
 def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     """
     Render prediction results in a formatted way.
@@ -28,6 +121,11 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     # Generate unique key if not provided
     if key_suffix is None:
         key_suffix = str(time.time()).replace('.', '_')
+    
+    # Check if this is a toxicity result
+    if result.get('model_type') == 'toxicity':
+        return render_toxicity_results(result, key_suffix)
+    
     # Check for errors
     if 'error' in result:
         st.error(f"❌ {result['error']}")

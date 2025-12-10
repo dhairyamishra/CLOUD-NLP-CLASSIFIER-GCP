@@ -42,6 +42,7 @@ class ModelManager:
         self.models_dir = self.project_root / "models"
         self.baseline_dir = self.models_dir / "baselines"
         self.transformer_dir = self.models_dir / "transformer" / "distilbert"
+        self.toxicity_dir = self.models_dir / "toxicity_multi_head"
         
         # Device detection
         self.device = self._detect_device()
@@ -161,6 +162,76 @@ class ModelManager:
             logger.error(f"❌ Error loading transformer model: {e}")
             return None
     
+    def load_toxicity_model(self) -> Optional[Dict[str, Any]]:
+        """
+        Load toxicity classification model (Multi-label DistilBERT).
+        
+        Returns:
+            Dictionary with model, tokenizer, and label mappings, or None if failed.
+        """
+        # Check if already cached in session state
+        if 'toxicity_model' in st.session_state:
+            return st.session_state['toxicity_model']
+        
+        try:
+            if not self.toxicity_dir.exists():
+                logger.warning(f"⚠️ Toxicity model directory not found at {self.toxicity_dir}")
+                return None
+            
+            # Check for required model files
+            model_file = self.toxicity_dir / "model.safetensors"
+            config_file = self.toxicity_dir / "config.json"
+            
+            if not config_file.exists():
+                logger.warning(f"⚠️ Toxicity model files not found in {self.toxicity_dir}")
+                return None
+            
+            # Load model
+            model = AutoModelForSequenceClassification.from_pretrained(
+                str(self.toxicity_dir)
+            )
+            model.to(self.device)
+            model.eval()
+            
+            # Load tokenizer
+            tokenizer = AutoTokenizer.from_pretrained(
+                str(self.toxicity_dir)
+            )
+            
+            # Load label mappings
+            labels_path = self.toxicity_dir / "labels.json"
+            if labels_path.exists():
+                with open(labels_path, 'r') as f:
+                    label_data = json.load(f)
+                    labels = label_data.get('classes', [])
+                    id2label = label_data.get('id2label', {})
+                    # Convert string keys to int
+                    id2label = {int(k): v for k, v in id2label.items()}
+            else:
+                # Fallback to model config
+                config = AutoConfig.from_pretrained(str(self.toxicity_dir))
+                id2label = config.id2label
+                labels = list(id2label.values())
+            
+            logger.info(f"✅ Loaded toxicity model from {self.toxicity_dir}")
+            logger.info(f"   Toxicity categories: {labels}")
+            
+            result = {
+                'model': model,
+                'tokenizer': tokenizer,
+                'id2label': id2label,
+                'labels': labels,
+                'device': self.device
+            }
+            
+            # Cache in session state
+            st.session_state['toxicity_model'] = result
+            return result
+        
+        except Exception as e:
+            logger.error(f"❌ Error loading toxicity model: {e}")
+            return None
+    
     def get_available_models(self) -> Dict[str, Dict[str, Any]]:
         """
         Get information about all available models.
@@ -206,6 +277,20 @@ class ModelManager:
                 'f1_score': '~0.91',
                 'inference_speed': '~50ms (GPU) / ~500ms (CPU)',
                 'description': 'Fine-tuned DistilBERT'
+            }
+        
+        # Check toxicity model
+        toxicity = self.load_toxicity_model()
+        if toxicity is not None:
+            models_info['Toxicity Classifier (Multi-label)'] = {
+                'key': 'toxicity',
+                'type': 'toxicity',
+                'status': 'loaded',
+                'accuracy': '~95%',
+                'f1_score': '~0.94',
+                'inference_speed': '~80ms (GPU) / ~600ms (CPU)',
+                'description': 'Multi-label toxicity detection (6 categories)',
+                'categories': toxicity.get('labels', [])
             }
         
         return models_info
