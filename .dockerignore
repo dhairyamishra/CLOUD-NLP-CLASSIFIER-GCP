@@ -87,3 +87,9 @@ docker-compose.yml
 .coverage
 htmlcov/
 .tox/
+
+# Deployment artifacts (master controller)
+.deployment/
+*.flag
+deployment_*.json
+deployment_*.md

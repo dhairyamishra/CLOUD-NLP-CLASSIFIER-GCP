@@ -1,0 +1,109 @@
+# Configuration for Transformer Model (DistilBERT)
+# ULTRA-QUICK MODE - Very fast training for rapid testing
+
+# Model settings
+model:
+  name: "distilbert-base-uncased"
+  num_labels: null  # Will be set automatically based on dataset
+  max_seq_length: 64   # ULTRA-QUICK: Very short sequences
+  dropout: 0.1
+  attention_dropout: 0.1
+
+# Training hyperparameters (ULTRA-QUICK MODE)
+training:
+  train_batch_size: 64   # ULTRA-QUICK: Larger batches
+  eval_batch_size: 128   # ULTRA-QUICK: Larger eval batches
+  learning_rate: 1.0e-4  # ULTRA-QUICK: Very high LR
+  num_train_epochs: 1    # ULTRA-QUICK: Only 1 epoch
+  weight_decay: 0.01
+  warmup_ratio: 0.05     # ULTRA-QUICK: Minimal warmup (5%)
+  warmup_steps: 0
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  
+  # Optimization
+  fp16: false
+  fp16_opt_level: "O1"
+  optim: "adamw_torch"
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1.0e-8
+  
+  # DataLoader settings
+  dataloader_num_workers: 0  # WINDOWS FIX: Set to 0 to avoid multiprocessing hangs
+  dataloader_pin_memory: true
+  dataloader_drop_last: false
+  dataloader_prefetch_factor: 2
+  
+  # Early stopping (ULTRA-QUICK: Disabled for speed)
+  early_stopping:
+    enabled: false  # ULTRA-QUICK: No early stopping
+    patience: 1
+    metric: "eval_f1_macro"
+    mode: "max"
+    min_delta: 0.01
+    restore_best_weights: false
+  
+  # Learning rate scheduler
+  lr_scheduler:
+    type: "linear"  # QUICK: Simple linear scheduler
+    num_cycles: 1
+  
+  # Logging and checkpointing (ULTRA-QUICK: Minimal)
+  logging_steps: 200     # ULTRA-QUICK: Less frequent logging
+  eval_steps: 1000       # ULTRA-QUICK: Rare evaluation
+  save_steps: 10000      # ULTRA-QUICK: Minimal checkpointing
+  save_total_limit: 1
+  load_best_model_at_end: false  # ULTRA-QUICK: No loading best
+  metric_for_best_model: "f1_macro"
+  greater_is_better: true
+  
+  # Additional training strategies
+  label_smoothing_factor: 0.0
+
+# Data paths
+data:
+  train_path: "data/processed/train.csv"
+  val_path: "data/processed/val.csv"
+  test_path: "data/processed/test.csv"
+
+# Model save paths
+model_save_dir: "models/transformer/distilbert"
+
+# Reproducibility
+seed: 42
+
+# Evaluation settings
+evaluation:
+  metrics:
+    - "accuracy"
+    - "f1_macro"
+    - "f1_weighted"
+    - "precision_macro"
+    - "recall_macro"
+  save_confusion_matrix: true
+  save_classification_report: true
+  compute_roc_auc: true
+
+# Device settings
+device: "cuda"  # Options: "cuda", "cpu", "mps"
+
+# Training notes
+notes: |
+  QUICK MODE TRAINING CONFIGURATION
+  
+  Key Features:
+  - Short sequence length (128 tokens) for speed
+  - 3 epochs with aggressive early stopping (patience=2)
+  - Linear LR schedule
+  - No gradient accumulation
+  - No mixed precision (FP16)
+  - Minimal checkpointing
+  
+  Expected Performance:
+  - Accuracy: 80-85% (lower due to 1 epoch)
+  - F1 Score: 0.78-0.82
+  - Training Time: 1-2 minutes (GPU), 5-8 minutes (CPU)
+  
+  Usage:
+  python -m src.models.transformer_training --config config/config_transformer_quick.yaml

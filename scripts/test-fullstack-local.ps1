@@ -68,7 +68,7 @@ $apiHealthy = $false
 for ($i = 1; $i -le 3; $i++) {
     try {
         $apiResponse = curl.exe -s http://localhost:8000/health
-        if ($apiResponse -match "healthy") {
+        if ($apiResponse -match "ok") {
             Write-Host "[OK] API is healthy" -ForegroundColor Green
             $apiHealthy = $true
             break
