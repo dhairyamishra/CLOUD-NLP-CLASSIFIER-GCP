@@ -13,7 +13,8 @@ import time
 from typing import Dict, Any, List
 
 
-BASE_URL = "http://localhost:8000"
+# BASE_URL = "http://localhost:8000"
+BASE_URL = "http://35.232.76.140:8000"
 
 
 def print_section(title: str):
@@ -185,12 +186,19 @@ def print_comparison_summary(results: Dict[str, Any]):
     
     print("\n💡 Recommendations:")
     fastest = sorted_models[0][0]
-    print(f"   • Fastest: {fastest} ({sorted_models[0][1]['avg_time']:.2f}ms)")
+    fastest_time = sorted_models[0][1]['avg_time']
     
-    if len(sorted_models) > 1:
-        slowest = sorted_models[-1][0]
-        speedup = sorted_models[-1][1]['avg_time'] / sorted_models[0][1]['avg_time']
-        print(f"   • {fastest} is {speedup:.1f}x faster than {slowest}")
+    if fastest_time > 0:
+        print(f"   • Fastest: {fastest} ({fastest_time:.2f}ms)")
+        
+        if len(sorted_models) > 1:
+            slowest = sorted_models[-1][0]
+            slowest_time = sorted_models[-1][1]['avg_time']
+            if slowest_time > 0 and fastest_time > 0:
+                speedup = slowest_time / fastest_time
+                print(f"   • {fastest} is {speedup:.1f}x faster than {slowest}")
+    else:
+        print(f"   • Fastest: {fastest} (no valid timing data)")
     
     print(f"   • Use DistilBERT for best accuracy (90-93%)")
     print(f"   • Use Logistic Regression or Linear SVM for speed (85-88% accuracy)")

@@ -16,6 +16,38 @@ from src.ui.utils.helpers import (
 )
 
 
+def get_toxicity_gradient_color(percentage: float) -> str:
+    """
+    Get exponential gradient color from green to red based on percentage (0-100).
+    Uses exponential curve to favor red more - red appears more aggressively as percentage increases.
+    
+    Args:
+        percentage: Value from 0 to 100
+    
+    Returns:
+        Hex color string
+    """
+    # Clamp percentage to 0-100
+    percentage = max(0, min(100, percentage))
+    
+    # Normalize to 0-1
+    normalized = percentage / 100
+    
+    # Apply exponential curve to favor red MORE aggressively
+    # Red grows faster (square root), green drops faster (squared)
+    red_factor = normalized ** 0.5  # Square root - red appears quickly
+    green_factor = (1 - normalized) ** 2  # Squared - green drops off fast
+    
+    # Calculate RGB values
+    # Green (0, 255, 0) at 0% -> Red (255, 0, 0) at 100%
+    red = int(255 * red_factor)
+    green = int(255 * green_factor)
+    blue = 0
+    
+    # Convert to hex
+    return f"#{red:02x}{green:02x}{blue:02x}"
+
+
 def render_toxicity_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     """
     Render toxicity prediction results (multi-label).
@@ -145,6 +177,44 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
     inference_time = result.get('inference_time_ms', 0.0)
     probabilities = result.get('probabilities', {})
     model_type = result.get('model_type', 'unknown')
+    # Check both 'model' and 'model_name' fields (API uses 'model_name')
+    model_name = result.get('model', result.get('model_name', 'unknown'))
+    
+    # Determine model badge based on current selected model (from session state) or result
+    # This ensures badge updates when model is switched
+    current_model = st.session_state.get('selected_model', model_name)
+    
+    # Determine if it's a baseline model (ML) or deep learning model (DL)
+    is_baseline = ('logistic' in str(current_model).lower() or 
+                   'svm' in str(current_model).lower() or 
+                   model_type == 'baseline')
+    
+    model_badge_color = "#0066CC" if is_baseline else "#9C27B0"
+    model_badge_text = "ML Model" if is_baseline else "DL Model"
+    
+    st.markdown(
+        f"""
+        <div style='text-align: left; margin: 5px 0 10px 0;'>
+            <span style='
+                background-color: {model_badge_color};
+                color: white;
+                padding: 3px 10px;
+                border-radius: 12px;
+                font-size: 12px;
+            '>
+                {model_badge_text}
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # Map numeric labels to meaningful names (only for DistilBERT model)
+    if 'distilbert' in str(model_name).lower():
+        if label == '0' or label == 0:
+            label = 'Regular Speech'
+        elif label == '1' or label == 1:
+            label = 'Hate Speech'
     
     # Get color and emoji
     color = get_sentiment_color(label)
@@ -192,6 +262,44 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
         if show_probabilities and probabilities:
             st.markdown("### 📊 Probability Scores")
             
+            # Convert to dict format if needed (API returns various formats)
+            prob_dict = {}
+            
+            if isinstance(probabilities, list):
+                # Check if it's a list of dicts (API format: [{"label": "...", "score": 0.5}, ...])
+                if probabilities and isinstance(probabilities[0], dict):
+                    # Extract label-score pairs from list of dicts
+                    for item in probabilities:
+                        if 'label' in item and 'score' in item:
+                            # Map numeric labels to meaningful names (only for DistilBERT)
+                            label_val = item['label']
+                            if 'distilbert' in str(model_name).lower():
+                                if label_val == '0' or label_val == 0:
+                                    label_val = 'Regular Speech'
+                                elif label_val == '1' or label_val == 1:
+                                    label_val = 'Hate Speech'
+                            prob_dict[label_val] = item['score']
+                else:
+                    # List of numbers: [score1, score2, ...]
+                    prob_dict = {f"Class {i}": score for i, score in enumerate(probabilities)}
+            elif isinstance(probabilities, dict):
+                # Check if it's a nested dict (toxicity model format)
+                # Example: {'toxic': {'score': 0.5}, 'severe_toxic': {'score': 0.1}}
+                for key, value in probabilities.items():
+                    if isinstance(value, dict):
+                        # Nested dict - extract score
+                        if 'score' in value:
+                            prob_dict[key] = value['score']
+                        else:
+                            # Try to get any numeric value
+                            prob_dict[key] = next((v for v in value.values() if isinstance(v, (int, float))), 0.0)
+                    elif isinstance(value, (int, float)):
+                        # Already a number
+                        prob_dict[key] = value
+                    else:
+                        # Unknown format, skip
+                        continue
+            
             # Define consistent label order (don't sort by value)
             # This ensures consistent axis ordering regardless of probabilities
             label_order = {
@@ -204,18 +312,47 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                 'neutral': 2
             }
             
+            # Skip if prob_dict is empty or invalid
+            if not prob_dict:
+                st.warning("No probability data available")
+                return
+            
             # Sort by predefined order, fallback to alphabetical
             sorted_probs = sorted(
-                probabilities.items(),
+                prob_dict.items(),
                 key=lambda x: label_order.get(x[0], ord(x[0][0]))
             )
             
-            # Create horizontal bar chart
-            labels_list = [item[0] for item in sorted_probs]
-            values_list = [item[1] * 100 for item in sorted_probs]  # Convert to percentage
+            # Create horizontal bar chart with type safety
+            labels_list = []
+            values_list = []
             
-            # Color bars based on sentiment
-            colors_list = [get_sentiment_color(label) for label in labels_list]
+            for label, value in sorted_probs:
+                # Ensure value is numeric
+                if isinstance(value, (int, float)):
+                    labels_list.append(label)
+                    values_list.append(value * 100)  # Convert to percentage
+                elif isinstance(value, dict):
+                    # Still nested - try to extract
+                    numeric_val = value.get('score', 0.0) if 'score' in value else 0.0
+                    labels_list.append(label)
+                    values_list.append(numeric_val * 100)
+            
+            if not values_list:
+                st.warning("Could not parse probability scores")
+                return
+            
+            # Color bars based on sentiment or gradient for toxicity
+            # Check both model_type and model_name for toxicity
+            is_toxicity = (model_type == 'toxicity' or 
+                          'toxicity' in str(model_name).lower())
+            
+            if is_toxicity:
+                # Use gradient coloring for toxicity model (green to red based on percentage)
+                colors_list = [get_toxicity_gradient_color(value) for value in values_list]
+            else:
+                # Use sentiment-based coloring for other models
+                colors_list = [get_sentiment_color(label) for label in labels_list]
             
             fig = go.Figure(data=[
                 go.Bar(
@@ -240,28 +377,10 @@ def render_results(result: Dict[str, Any], key_suffix: str = None) -> None:
                 xaxis=dict(range=[0, 100])
             )
             
-            st.plotly_chart(fig, use_container_width=True, key=f"chart_{key_suffix}")
-        
-        # Model info badge
-        model_badge_color = "#0066CC" if model_type == 'baseline' else "#9C27B0"
-        model_badge_text = "ML Model" if model_type == 'baseline' else "DL Model"
-        
-        st.markdown(
-            f"""
-            <div style='text-align: right; margin-top: 10px;'>
-                <span style='
-                    background-color: {model_badge_color};
-                    color: white;
-                    padding: 3px 10px;
-                    border-radius: 12px;
-                    font-size: 12px;
-                '>
-                    {model_badge_text}
-                </span>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+            # Create left-aligned 70% width container for the chart
+            col1, col2 = st.columns([0.7, 0.3])
+            with col1:
+                st.plotly_chart(fig, use_container_width=True, key=f"chart_{key_suffix}")
 
 
 def render_message_bubble(role: str, content: Any, timestamp: str = None) -> None:

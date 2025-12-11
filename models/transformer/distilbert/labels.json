@@ -1,14 +1,14 @@
 {
   "label2id": {
-    "0": 0,
-    "1": 1
+    "Regular Speech": 0,
+    "Hate Speech": 1
   },
   "id2label": {
-    "0": "0",
-    "1": "1"
+    "0": "Regular Speech",
+    "1": "Hate Speech"
   },
   "classes": [
-    "0",
-    "1"
+    "Regular Speech",
+    "Hate Speech"
   ]
 }

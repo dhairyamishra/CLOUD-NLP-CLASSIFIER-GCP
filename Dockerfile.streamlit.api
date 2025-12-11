@@ -1,0 +1,54 @@
+# Dockerfile for Streamlit UI (API Mode)
+# Lightweight version that connects to deployed FastAPI backend
+# Does NOT include ML models - calls API instead
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app \
+    STREAMLIT_SERVER_PORT=8501 \
+    STREAMLIT_SERVER_ADDRESS=0.0.0.0 \
+    STREAMLIT_SERVER_HEADLESS=true \
+    STREAMLIT_BROWSER_GATHER_USAGE_STATS=false \
+    API_URL=http://localhost:8000
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ONLY UI dependencies (no PyTorch, no transformers, no scikit-learn)
+# This keeps the image small and fast to build
+RUN pip install --no-cache-dir \
+    streamlit==1.29.0 \
+    plotly==5.18.0 \
+    requests==2.31.0 \
+    urllib3==2.1.0
+
+# Create non-root user for security
+RUN useradd -m -u 1000 -s /bin/bash appuser && \
+    chown -R appuser:appuser /app
+
+# Copy ONLY UI code (no models, no training code)
+COPY --chown=appuser:appuser src/ui/ ./src/ui/
+COPY --chown=appuser:appuser .streamlit/ ./.streamlit/
+
+# Switch to non-root user
+USER appuser
+
+# Expose Streamlit port
+EXPOSE 8501
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+
+# Run Streamlit app in API mode
+CMD ["streamlit", "run", "src/ui/streamlit_app_api.py", "--server.port=8501", "--server.address=0.0.0.0"]

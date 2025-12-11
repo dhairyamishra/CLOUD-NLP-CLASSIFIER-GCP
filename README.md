@@ -1,18 +1,127 @@
-# 🚀 Cloud NLP Text Classification on GCP
+PS C:\--DPM-MAIN-DIR--\windsurf_projects\CLOUD-NLP-CLASSIFIER-GCP> .\scripts\gcp-phase2-create-vm.ps1
+========================================
+Phase 2: Create and Configure VM
+========================================
+Verbose logging enabled
+
+Reading configuration from gcp-deployment-config.txt...
+  Loaded: PROJECT_ID = mnist-k8s-pipeline
+  Loaded: REGION = us-central1
+  Loaded: ZONE = us-central1-a
+  Loaded: STATIC_IP = 35.232.76.140
+  Loaded: VM_NAME = nlp-classifier-vm
+  Loaded: MACHINE_TYPE = e2-standard-2
+  Loaded: BOOT_DISK_SIZE = 50GB
+
+Configuration loaded:
+  Project:      mnist-k8s-pipeline
+  VM Name:      nlp-classifier-vm
+  Machine Type: e2-standard-2
+  Disk Size:    50GB
+  Static IP:    35.232.76.140
+
+[1/4] Checking if VM already exists...
+  Running: gcloud compute instances describe nlp-classifier-vm --zone=us-central1-a
+  Exit code: 1
+OK - No existing VM found
+
+[2/4] Creating firewall rules...
+  Checking firewall rule: allow-nlp-api
+  - allow-nlp-api already exists (port 8000)
+  Checking firewall rule: allow-nlp-ui
+  - allow-nlp-ui already exists (port 8501)
+  Checking firewall rule: allow-http
+  - allow-http already exists (port 80)
+  Checking firewall rule: allow-https
+  - allow-https already exists (port 443)
+OK - Firewall rules configured
+
+[3/4] Creating VM instance...
+This will take 2-3 minutes...
+
+Saving startup script to: C:\Users\dhair\AppData\Local\Temp\tmpCC2F.tmp
+Startup script saved (762 bytes)
+
+Creating VM with command:
+  gcloud compute instances create nlp-classifier-vm
+    --zone=us-central1-a
+    --machine-type=e2-standard-2
+    --image-family=ubuntu-2204-lts
+    --boot-disk-size=50GB
+    --boot-disk-type=pd-ssd
+    --address=35.232.76.140
+    --tags=http-server,https-server,allow-nlp-api,allow-nlp-ui
+
+Executing VM creation...
+Created [https://www.googleapis.com/compute/v1/projects/mnist-k8s-pipeline/zones/us-central1-a/instances/nlp-classifier-vm].
+WARNING: Some requests generated warnings:
+ - Disk size: '50 GB' is larger than image size: '10 GB'. You might need to resize the root repartition manually if the operating system does not support automatic resizing. See https://cloud.google.com/compute/docs/disks/add-persistent-disk#resize_pd for details.
+
+NAME               ZONE           MACHINE_TYPE   PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
+nlp-classifier-vm  us-central1-a  e2-standard-2               10.128.0.12  35.232.76.140  RUNNING
+VM creation command completed with exit code: 0
+Cleaning up temporary startup script...
+OK - VM created successfully!
+
+[4/4] Waiting for VM to be ready...
+Waiting for startup script to complete (2-3 minutes)...
+  Attempt 1/30...
+OK - SSH connection established
+
+========================================
+PHASE 2 COMPLETE!
+========================================
+
+VM Details:
+  Name:        nlp-classifier-vm
+  Zone:        us-central1-a
+  External IP: 35.232.76.140
+  Machine:     e2-standard-2 (2 vCPU, 8GB RAM)
+  Disk:        50GB SSD
+
+Access URLs (after deployment):
+  API:  http://
+  UI:   http://
+  Docs: http:///docs
+
+SSH Command:
+  gcloud compute ssh nlp-classifier-vm --zone=us-central1-a
+
+Firewall Rules Created:
+  - Port 22:   SSH (default)
+  - Port 80:   HTTP
+  - Port 443:  HTTPS
+  - Port 8000: API
+  - Port 8501: UI
+
+Next Steps:
+  1. Wait 2-3 minutes for startup script to complete
+  2. SSH into VM to verify Docker installation
+  3. Proceed to Phase 3: Setup VM Environment
+
+Ready to proceed to Phase 3?
+PS C:\--DPM-MAIN-DIR--\windsurf_projects\CLOUD-NLP-CLASSIFIER-GCP> # 🚀 Cloud NLP Text Classification on GCP
 
 An end-to-end text classification pipeline for hate speech detection, demonstrating cloud computing, deep neural networks, and performance analysis.
 
-## 🎉 **NEW: Your Models Are Live!** 
+## 🎉 **NEW: GCP Cloud Deployment In Progress!** 
 
-✅ **API Server Running:** http://localhost:8000  
-✅ **Model Accuracy:** 96.29% (DistilBERT)  
-✅ **Inference Speed:** 17-20ms  
-✅ **Status:** Production Ready!
+🚀 **Cloud Deployment Status:** Phase 2/14 Complete (14%)  
+☁️ **GCP VM Created:** nlp-classifier-vm  
+🌐 **External IP:** 35.232.76.140  
+✅ **Local Testing:** 100% Complete (326+ tests passed)  
+📊 **Model Accuracy:** 96.57% (DistilBERT)
+
+**Deployment Progress:**
+- ✅ Phase 1: GCP Project Setup (Complete)
+- ✅ Phase 2: VM Creation & Firewall (Complete)
+- 🔄 Phase 3: VM Environment Setup (In Progress)
+- 📖 [View Full Progress](GCP_DEPLOYMENT_PROGRESS.md) - Detailed deployment status
 
 **Quick Start:**
-- 📖 [Quick Deployment Guide](QUICK_DEPLOYMENT_GUIDE.md) - Get started in 5 minutes
-- 📚 [Complete Usage Guide](docs/USING_YOUR_TRAINED_MODELS.md) - All deployment options
-- 📊 [Deployment Status](docs/DEPLOYMENT_STATUS.md) - Current status & metrics
+- 📖 [GCP Deployment Plan](GCP_VM_DOCKER_DEPLOYMENT_PLAN.md) - Complete deployment guide
+- 📊 [Deployment Progress](GCP_DEPLOYMENT_PROGRESS.md) - Real-time progress tracking
+- 📚 [Local Usage Guide](docs/USING_YOUR_TRAINED_MODELS.md) - Local deployment options
 
 ---
 
@@ -31,17 +140,31 @@ This project implements a production-grade hate speech classification system wit
 
 ### 🎯 Project Status
 
+#### **Local Development & Testing** ✅
 | Phase | Status | Description |
 |-------|--------|-------------|
 | **Phase 1**: Data Pipeline | ✅ Complete | Dataset download, preprocessing, train/val/test splits |
 | **Phase 2**: Baseline Models | ✅ Complete | TF-IDF + LogReg/SVM with full evaluation |
-| **Phase 3**: Transformer Training | ✅ Complete | DistilBERT fine-tuning (96.29% accuracy!) |
+| **Phase 3**: Transformer Training | ✅ Complete | DistilBERT fine-tuning (96.57% accuracy!) |
 | **Phase 4**: FastAPI Server | ✅ Complete | Multi-model API with dynamic switching |
 | **Phase 5**: Dockerization | ✅ Complete | Production-ready Docker with all models |
 | **Phase 6**: End-to-End Testing | ✅ Complete | 326+ tests, 100% pass rate |
-| **Phase 7**: Production Deployment | 🚀 Ready | Local API running, ready for cloud |
 
-**Progress**: ✅ **10/10 Phases Complete (100%)** - **PRODUCTION READY!**
+**Local Progress**: ✅ **10/10 Phases Complete (100%)** - **PRODUCTION READY!**
+
+#### **GCP Cloud Deployment** 🔄
+| Phase | Status | Description |
+|-------|--------|-------------|
+| **Phase 1**: GCP Project Setup | ✅ Complete | APIs enabled, static IP reserved (35.232.76.140) |
+| **Phase 2**: VM Creation | ✅ Complete | e2-standard-2 VM running, firewall configured |
+| **Phase 3**: VM Environment Setup | 🔄 In Progress | Docker installation, directory setup |
+| **Phase 4**: File Transfer | ⏳ Pending | Upload code and models (3-5GB) |
+| **Phase 5**: Docker Compose Config | ⏳ Pending | Production compose file with volumes |
+| **Phase 6**: Build & Deploy | ⏳ Pending | Build images, start services |
+| **Phase 7**: External Testing | ⏳ Pending | Test API/UI from internet |
+| **Phase 8+**: Operations | ⏳ Pending | Auto-start, monitoring, backups, security |
+
+**Cloud Progress**: 🔄 **2/14 Phases Complete (14%)** - **IN PROGRESS**
 
 ## 🏗️ Architecture
 
