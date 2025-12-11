@@ -6,7 +6,7 @@
 # Usage:
 #   docker-compose -f docker-compose.fullstack.yml up -d
 #   docker-compose -f docker-compose.fullstack.yml down
-#   docker-compose -f docker-compose.fullstack.yml logs -f
+#   docker-compose -f docker-compose.fullstack.yml logs -f 
 # ============================================================================
 
 version: '3.8'
