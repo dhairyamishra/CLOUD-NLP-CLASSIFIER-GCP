@@ -1,15 +1,137 @@
-````markdown
-# CLOUD-NLP-CLASSIFIER-GCP – END-TO-END EXECUTION GUIDE
+# CLOUD-NLP-CLASSIFIER-GCP – QUICK START GUIDE
 
-**Initialize → Train → Test → Deploy** :contentReference[oaicite:0]{index=0}
+**🚀 One-Command Deployment with Master Controller**
 
-This document gives a **straight-line recipe** to get from a fresh machine to a **running cloud API**.
+This project now features an **automated deployment controller** that handles the entire pipeline from environment setup to production deployment.
 
-- Steps are grouped into **stages**.
-- Each step has:
-  - `STEP [x]:` – what you’re doing
-  - `Run Command:` – the exact command
-  - `Expected Result:` – what you should see
+## 🎯 Quick Start (Recommended)
+
+### Option 1: Automated Local Deployment (5 minutes)
+
+```bash
+# Clone repository
+git clone https://github.com/YOUR_USERNAME/CLOUD-NLP-CLASSIFIER-GCP.git
+cd CLOUD-NLP-CLASSIFIER-GCP
+
+# Run master deployment controller (handles everything!)
+python deploy-master-controller.py --profile quick
+```
+
+**What this does automatically:**
+- ✅ Creates virtual environment
+- ✅ Installs all dependencies
+- ✅ Preprocesses dataset
+- ✅ Trains baseline models (Logistic Regression, Linear SVM)
+- ✅ Trains DistilBERT transformer (quick profile: 1 epoch)
+- ✅ Trains toxicity multi-head model
+- ✅ Tests API locally
+- ✅ Builds Docker images (API + UI)
+- ✅ Runs full stack tests
+- ✅ Deploys containers with docker-compose
+
+**Total Time:** ~5 minutes (with quick profile)
+
+**Result:** Fully functional API at `http://localhost:8000` and UI at `http://localhost:8501`
+
+---
+
+### Option 2: Cloud Deployment (GCP)
+
+```bash
+# Deploy to Google Cloud Platform
+python deploy-master-controller.py --target cloud --gcp-project YOUR_PROJECT_ID
+```
+
+**What this does automatically:**
+- ✅ Everything from Option 1, plus:
+- ✅ Uploads models to Google Cloud Storage
+- ✅ Deploys to GCP VM with Docker
+- ✅ Configures firewall rules
+- ✅ Tests external endpoints
+- ✅ Provides live API URL
+
+**Total Time:** ~25-30 minutes
+
+**Result:** Production API accessible globally
+
+---
+
+## 📋 Deployment Profiles
+
+| Profile | Epochs | Training Time | Accuracy | Use Case |
+|---------|--------|---------------|----------|----------|
+| **quick** | 1 | 1-2 min GPU | 80-85% | Testing, development |
+| **full** | 15 | 15-25 min GPU | 90-93% | Production |
+| **cloud** | 10 | 20-40 min GPU | 90-93% | GCP optimized |
+
+```bash
+# Quick testing (default)
+python deploy-master-controller.py --profile quick
+
+# Full production training
+python deploy-master-controller.py --profile full
+
+# Cloud-optimized training
+python deploy-master-controller.py --profile cloud
+```
+
+---
+
+## 🎮 Master Controller Features
+
+### Resume from Checkpoint
+```bash
+# If deployment fails or is interrupted
+python deploy-master-controller.py --resume
+```
+
+### Force Re-run Stages
+```bash
+# Re-run all stages from scratch
+python deploy-master-controller.py --force --profile quick
+```
+
+### Skip Optional Stages
+```bash
+# Skip toxicity model training
+python deploy-master-controller.py --skip-toxicity
+
+# Skip UI deployment
+python deploy-master-controller.py --skip-ui
+```
+
+### Run Specific Stage
+```bash
+# Run only Docker build (Stage 6)
+python deploy-master-controller.py --stage 6
+
+# Run only tests (Stage 7)
+python deploy-master-controller.py --stage 7
+```
+
+---
+
+## 📊 Deployment Stages
+
+The master controller executes these stages automatically:
+
+- **Stage 0:** Environment Setup (venv, pip, requirements)
+- **Stage 1:** Data Preprocessing (download, clean, split)
+- **Stage 2:** Baseline Training (Logistic Regression, Linear SVM)
+- **Stage 3:** Transformer Training (DistilBERT with selected profile)
+- **Stage 4:** Toxicity Training (multi-head model)
+- **Stage 5:** Local API Testing (FastAPI validation)
+- **Stage 6:** Docker Build (docker-compose for API + UI)
+- **Stage 7:** Full Stack Testing (pytest + PowerShell tests)
+- **Stage 8:** GCS Upload (cloud only - model storage)
+- **Stage 9:** GCP Deployment (cloud only - VM deployment)
+- **Stage 10:** UI Deployment (cloud only - Streamlit UI)
+
+---
+
+## 🔍 Manual Step-by-Step Guide
+
+If you prefer manual control or need to troubleshoot, follow the detailed steps below.
 
 > **Note:** Commands assume you are in the project root: `CLOUD-NLP-CLASSIFIER-GCP/`.
 
@@ -22,10 +144,12 @@ Prepare your local machine with the right tools and create an isolated Python en
 
 **Requirements before proceeding:**
 
-- Python **3.10+** installed
+- Python **3.10+** installed (3.11 recommended)
 - Git installed
-- (For Docker steps) Docker installed and running
-- (For cloud deploy) `gcloud` CLI installed and authenticated
+- Docker installed and running (for containerization)
+- `gcloud` CLI installed and authenticated (for cloud deployment)
+- 10GB free disk space (for models and Docker images)
+- (Optional) GPU for faster training
 
 ---
 

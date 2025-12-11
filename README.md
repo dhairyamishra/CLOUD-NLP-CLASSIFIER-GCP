@@ -134,7 +134,58 @@ cloud-nlp-classification-gcp/
 
 ## 🚀 Quick Start
 
-### 1. Environment Setup
+### 🎯 Automated Deployment (Recommended)
+
+**One-command deployment with the Master Controller:**
+
+```bash
+# Clone repository
+git clone https://github.com/YOUR_USERNAME/CLOUD-NLP-CLASSIFIER-GCP.git
+cd CLOUD-NLP-CLASSIFIER-GCP
+
+# Run automated deployment (5 minutes)
+python deploy-master-controller.py --profile quick
+```
+
+**What this does automatically:**
+- ✅ Creates virtual environment and installs dependencies
+- ✅ Downloads and preprocesses dataset
+- ✅ Trains all 4 models (DistilBERT, Logistic Regression, Linear SVM, Toxicity)
+- ✅ Builds Docker images with docker-compose
+- ✅ Runs comprehensive test suite
+- ✅ Deploys API at `http://localhost:8000` and UI at `http://localhost:8501`
+
+**Result:** Fully functional multi-model API in 5 minutes!
+
+---
+
+### 📋 Deployment Options
+
+```bash
+# Quick deployment (1 epoch, 5 min)
+python deploy-master-controller.py --profile quick
+
+# Full production deployment (15 epochs, 30 min)
+python deploy-master-controller.py --profile full
+
+# Cloud deployment to GCP
+python deploy-master-controller.py --target cloud --gcp-project YOUR_PROJECT_ID
+
+# Resume from checkpoint (if interrupted)
+python deploy-master-controller.py --resume
+
+# Force re-run all stages
+python deploy-master-controller.py --force --profile quick
+
+# Skip optional stages
+python deploy-master-controller.py --skip-toxicity --skip-ui
+```
+
+---
+
+### 🔧 Manual Setup (Alternative)
+
+If you prefer manual control:
 
 ```bash
 # Create virtual environment

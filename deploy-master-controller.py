@@ -3,8 +3,52 @@
 Master Deployment Controller for CLOUD-NLP-CLASSIFIER-GCP
 
 Orchestrates the complete deployment pipeline from fresh repository clone to 
-fully functional production deployment on GCP. Supports multiple execution modes,
-checkpoint/resume functionality, and comprehensive validation.
+fully functional production deployment (local or GCP cloud). Supports multiple 
+execution modes, checkpoint/resume functionality, and comprehensive validation.
+
+QUICK START:
+    # Automated local deployment (5 minutes)
+    python deploy-master-controller.py --profile quick
+    
+    # Full production deployment (30 minutes)
+    python deploy-master-controller.py --profile full
+    
+    # Cloud deployment to GCP
+    python deploy-master-controller.py --target cloud --gcp-project YOUR_PROJECT_ID
+    
+    # Resume from checkpoint
+    python deploy-master-controller.py --resume
+    
+    # Force re-run all stages
+    python deploy-master-controller.py --force --profile quick
+
+DEPLOYMENT STAGES:
+    Stage 0: Environment Setup (venv, pip, requirements)
+    Stage 1: Data Preprocessing (download, clean, split)
+    Stage 2: Baseline Training (Logistic Regression, Linear SVM)
+    Stage 3: Transformer Training (DistilBERT with selected profile)
+    Stage 4: Toxicity Training (multi-head model, optional)
+    Stage 5: Local API Testing (FastAPI validation)
+    Stage 6: Docker Build (docker-compose for API + UI)
+    Stage 7: Full Stack Testing (pytest + PowerShell tests)
+    Stage 8: GCS Upload (cloud only - model storage)
+    Stage 9: GCP Deployment (cloud only - VM deployment)
+    Stage 10: UI Deployment (cloud only - Streamlit UI)
+
+PROFILES:
+    quick:  1 epoch,  1-2 min GPU, 80-85% acc (testing/development)
+    full:   15 epochs, 15-25 min GPU, 90-93% acc (production)
+    cloud:  10 epochs, 20-40 min GPU, 90-93% acc (GCP optimized)
+
+FEATURES:
+    - Automated end-to-end deployment
+    - Checkpoint system with resume capability
+    - Real-time output streaming for all stages
+    - Comprehensive logging and progress tracking
+    - Interactive and automated modes
+    - Profile-based training configurations
+    - Docker Compose integration (parallel builds)
+    - Multi-model support (4 models in single deployment)
 
 Version: 1.0.0
 Author: CLOUD-NLP-CLASSIFIER-GCP Team
