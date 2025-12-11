@@ -861,9 +861,24 @@ This project is for educational purposes.
 ## 📚 Additional Documentation
 
 Comprehensive guides available in the `docs/` directory:
-- `MULTI_MODEL_DOCKER_GUIDE.md` - **NEW!** Multi-model Docker deployment (500+ lines)
+
+### Core Directory Documentation
+- `SRC_DIRECTORY_DOCUMENTATION.md` - Complete source code reference with 21 files across 4 modules (API, Data, Models, UI)
+- `CONFIG_DIRECTORY_DOCUMENTATION.md` - Detailed config file structure, hyperparameters, and usage patterns
+- `MODELS_DIRECTORY_DOCUMENTATION.md` - Model architectures, file formats, checkpoints, and performance comparison
+- `SCRIPTS_DIRECTORY_DOCUMENTATION.md` - Complete scripts reference with 38 automation scripts (30 active, 8 obsolete)
+- `TESTS_DIRECTORY_DOCUMENTATION.md` - Test suite documentation with 10 test files covering all pipeline components
+- `ROOT_LEVEL_FILES_DOCUMENTATION.md` - **NEW!** Root-level files reference (38 files across 3 parts):
+  - **Part 1**: Configuration, deployment, Docker, models, reports, documentation (13 files)
+  - **Part 2**: Docker Compose files + Dockerfiles + .dockerignore (11 files)
+  - **Part 3**: Python execution scripts, testing scripts, requirements.txt (14 files)
+
+### Docker & Deployment Guides
+- `MULTI_MODEL_DOCKER_GUIDE.md` - Multi-model Docker deployment (500+ lines)
 - `DOCKER_GUIDE.md` - Complete Docker documentation (650+ lines)
 - `DOCKER_COMPOSE_GUIDE.md` - Docker Compose best practices (600+ lines)
+
+### Training & Development
 - `PHASE10_ADVANCED_TRAINING_SUMMARY.md` - Advanced training features
 - `CROSS_PLATFORM_GUIDE.md` - Cross-platform development guide
 - `PROJECT_STATUS.md` - Current project status and metrics
